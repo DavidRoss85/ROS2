@@ -7,21 +7,24 @@ from gps_interfaces.msg import Customgps
 #Global Constants:
 FILE_HEADER = "HEAD_FRAME,UTC_SEC,UTC_NANO,LAT,LON,ALT,UTME,UTMN,ZONE,LETTER,HDOP,STRING\n"
 DEFAULT_FILENAME = "./gps_data/gps_data.csv"
+DEFAULT_TOPIC = 'gps'
 
 class GPSListener(Node):
-    def __init__(self,filename=DEFAULT_FILENAME):
+    def __init__(self,filename=DEFAULT_FILENAME,topic=DEFAULT_TOPIC):
         super().__init__('gps_recorder')
 
         self.filename = filename
+        self.__topic = topic
         with open(filename, 'w') as file:
             file.write(FILE_HEADER)
 
         self.subscription = self.create_subscription(
             Customgps,
-            'gps',
+            self.__topic,
             self.listener_callback,
             10
         )
+        self.get_logger().info(f"Recorder listening to {self.__topic}\n")
         self.subscription
 
     def listener_callback(self,message:Customgps):
