@@ -1,0 +1,12 @@
+build/
+install/
+log/
+src/examples/
+**/build/
+**/install/
+**/log/
+**/.vscode/
+venv/
+**/venv/
+.env
+**/.env
