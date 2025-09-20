@@ -45,7 +45,7 @@ class GPSListener(Node):
                 +f"{message.zone},"
                 +f"{message.letter},"
                 +f"{message.hdop},"
-                +f"{message.gpgga_read}\n"
+                +f"{message.gpgga_read.rstrip()}\n"
             )
             file.write(formatted_message)
 
