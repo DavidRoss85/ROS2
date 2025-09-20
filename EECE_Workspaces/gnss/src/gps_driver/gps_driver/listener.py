@@ -6,7 +6,7 @@ from gps_interfaces.msg import Customgps
 
 #Global Constants:
 FILE_HEADER = "HEAD_FRAME,UTC_SEC,UTC_NANO,LAT,LON,ALT,UTME,UTMN,ZONE,LETTER,HDOP,STRING\n"
-DEFAULT_FILENAME = "~/gps_data.csv"
+DEFAULT_FILENAME = "./gps_data/gps_data.csv"
 
 class GPSListener(Node):
     def __init__(self,filename=DEFAULT_FILENAME):
