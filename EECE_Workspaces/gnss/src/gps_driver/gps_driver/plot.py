@@ -290,18 +290,18 @@ class ScatterGUI:
 ##############################################################################################  
 def main():
 
-    data1 = GPSScatterPlot('first_graph',OUTDOOR_FULL_PATH,'blue')
+    data1 = GPSScatterPlot('first_graph',WALKING_FULL_PATH,'blue')
     data2 = GPSScatterPlot('second_graph', INDOOR_FULL_PATH,'red')
-    data1.set_x_axis_field('UTC_SEC')
-    data1.set_y_axis_field('ALT')
-    data2.set_x_axis_field('UTC_SEC')
-    data2.set_y_axis_field('ALT')
-    data1.calibrate_graph('line')
-    data2.calibrate_graph('line')
+    # data1.set_x_axis_field('UTC_SEC')
+    # data1.set_y_axis_field('ALT')
+    # data2.set_x_axis_field('UTC_SEC')
+    # data2.set_y_axis_field('ALT')
+    # data1.calibrate_graph('line')
+    # data2.calibrate_graph('line')
     chart = ScatterGUI('GPS data','UTM East', 'UTM North')
     chart.add_graph(data1)
     chart.add_graph(data2)
-    chart.show('line')
+    chart.show()
 
     pass
 
