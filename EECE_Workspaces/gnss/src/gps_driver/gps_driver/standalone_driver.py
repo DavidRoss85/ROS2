@@ -61,6 +61,9 @@ FREQUENCY = 0.1  #seconds
 BAUD_RATE = 4800
 TIMEOUT = 0.1   #10Hz
 DEFAULT_PORT = '/dev/ttyUSB0'
+
+HOUR_TO_SECOND_FACTOR = 3600
+MINUTE_TO_SECOND_FACTOR = 60
 #*******************************************************************
 #*******************************************************************
 #Position Data class... Automatically converts a GPGGA string on creation
@@ -110,6 +113,11 @@ class PositionData():
         return degrees
 #------------------------------------------
 
+    def convert_utc_string_to_seconds(self,time_in_UTC):
+        converted_time_in_UTC = (float(time_in_UTC[0:2])*HOUR_TO_SECOND_FACTOR)+ (float(time_in_UTC[2:4])*MINUTE_TO_SECOND_FACTOR) + float(time_in_UTC[4:])
+        return converted_time_in_UTC
+#------------------------------------------
+
     def convert_UTC_to_epoch(self,time_in_UTC):
         now = time.localtime() #Current time
         today_start = time.struct_time((
@@ -121,12 +129,13 @@ class PositionData():
             now.tm_yday,
             now.tm_isdst
         ))
-        epoch_in_secs = float(time.mktime(today_start)) + time_in_UTC
+        
+        epoch_in_secs = float(time.mktime(today_start)) + self.convert_utc_string_to_seconds(time_in_UTC)
         return epoch_in_secs
 #------------------------------------------
 
     def assign_values_from_list(self, value_list):
-        self.__utc = self.convert_UTC_to_epoch(float(value_list[UTC_INDEX]))
+        self.__utc = self.convert_UTC_to_epoch(value_list[UTC_INDEX])
         self.__lat = self.negate_by_hemisphere(
             self.convert_degMins_to_degDec(float(value_list[LAT_INDEX])),
             value_list[LAT_DIR_INDEX]
