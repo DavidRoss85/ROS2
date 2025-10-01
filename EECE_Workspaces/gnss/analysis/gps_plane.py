@@ -144,8 +144,11 @@ class GraphGUI:
 
         self.__plot.legend(loc="upper right")
         self.__plot.title(self.__name)
-        self.__plot.ylabel(self.__y_label)
-        self.__plot.xlabel(self.__x_label)
+        # self.__plot.ylabel(self.__y_label)
+        # self.__plot.xlabel(self.__x_label)
+        self.__ax.set_xlabel(self.__x_label, loc='right')
+        self.__ax.set_ylabel(self.__y_label, loc='top')
+        
 
         #Display chart
         self.__plot.show()

@@ -40,7 +40,7 @@ def draw_stationary_scatterplot():
     )
     
 
-    chart = GraphGUI('Open area vs Occluded GPS Scatter plot ','UTM East', 'UTM North')
+    chart = GraphGUI('Comparison of GPS Accuracy for Open area vs Occluded area ','Deviation from mean - Easting (m)', 'Deviation from mean - Northing (m)')
     chart.add_graph(data1)
     chart.add_graph(data2)
     chart.show()
@@ -58,7 +58,7 @@ def draw_stationary_altitude_vs_time_plot():
     data1.calibrate_graph('line')
     data2.calibrate_graph('line')
 
-    chart = GraphGUI('Relative altitude vs Time','Time (s)', 'Altitude')
+    chart = GraphGUI('Comparison of GPS Altitude Data: Open area vs Occluded area','Time (s)', 'Altitude (m)')
     chart.add_graph(data1)
     chart.add_graph(data2)
     chart.show('line')
@@ -75,7 +75,7 @@ def draw_euclidean_distance_plot_1():
 
     data1.calibrate_graph('dist')
 
-    chart = GraphGUI('Euclidean Distance vs Time','Time (s)', 'Variance')
+    chart = GraphGUI('Euclidean Distance from mean over Time for Open Area','Time (s)', 'Positional Error (m)')
     chart.add_graph(data1)
 
     chart.show(graph_type='dist')
@@ -93,7 +93,7 @@ def draw_euclidean_distance_plot_2():
 
     data2.calibrate_graph('dist')
 
-    chart = GraphGUI('Euclidean Distance vs Time','Time (s)', 'Variance')
+    chart = GraphGUI('Euclidean Distance from mean over Time for Occluded Area','Time (s)', 'Positional Error (m)')
     chart.add_graph(data2)
     chart.show(graph_type='dist')
 
@@ -110,7 +110,7 @@ def draw_moving_scatterplot():
         + str(data1.get_y_mean())
     )   
 
-    chart = GraphGUI('Walking GPS Scatter plot ','UTM East', 'UTM North')
+    chart = GraphGUI('GPS Accuracy for walking data','Deviation from mean - Easting (m)', 'Deviation from mean - Northing (m)')
     chart.add_graph(data1)
     chart.show()
 
@@ -124,7 +124,7 @@ def draw_moving_altitude_vs_time_plot():
 
     data1.calibrate_graph('line')
 
-    chart = GraphGUI('Relative altitude vs Time','Time (s)', 'Altitude')
+    chart = GraphGUI('GPS Altitude Data over time for Walking','Time (s)', 'Altitude (m)')
     chart.add_graph(data1)
     chart.show('line')
 
