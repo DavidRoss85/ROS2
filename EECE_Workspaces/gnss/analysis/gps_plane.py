@@ -56,6 +56,8 @@ class GraphGUI:
             else:
                 self.__x_center = graph.get_x_mean()
                 self.__y_center = graph.get_y_mean()
+        elif graph_type.upper() == "HIST":
+            pass
         else:
             self.__x_range = max(self.__x_range, graph.get_x_range() * self.DEFAULT_PLOT_RANGE_SCALE)
             self.__y_range = max(self.__y_range, graph.get_y_range() * self.DEFAULT_PLOT_RANGE_SCALE)
@@ -90,6 +92,25 @@ class GraphGUI:
 
 ##############################################################################################  
     def apply_histogram_settings(self,zeroed=True):
+        for graph in self.__graph_list.values():
+            self.__plot.hist(
+                # graph.get_data()[graph.get_x_zeroed_field() if zeroed else graph.get_x_axis_field()], 
+                graph.get_data()[graph.get_y_zeroed_field() if zeroed else graph.get_y_axis_field()],
+                color=graph.get_color(),
+                alpha=graph.get_alpha(),
+                label=graph.get_name(),
+                edgecolor='black',
+                bins=30
+            )
+
+            self.calibrate_center(graph,"histogram",zeroed)
+        #Set chart properties:
+        self.__ax_position = ('data',self.__x_min)
+        self.__ay_position = ('data',self.__y_min)
+
+
+##############################################################################################        
+    def apply_line_settings(self,zeroed=True):
         for graph in self.__graph_list.values():
             self.__plot.plot(
                 graph.get_data()[graph.get_x_zeroed_field() if zeroed else graph.get_x_axis_field()], 
@@ -130,9 +151,10 @@ class GraphGUI:
 
         if graph_type.upper() == 'SCATTER':
             self.apply_scatterplot_settings(zeroed)
-            
-        else:
+        elif graph_type.upper() == 'HIST':
             self.apply_histogram_settings(zeroed)
+        else:
+            self.apply_line_settings(zeroed)
             
 
         #Set chart properties:

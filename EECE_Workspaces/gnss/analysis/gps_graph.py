@@ -69,6 +69,10 @@ class GPSPlot:
                 abs(self.__y_mean - self.__y_max),
                 abs(self.__y_mean - self.__y_min)
             )
+        elif option.upper() == "HIST":
+            self.__data[self.__x_axis_zeroed ] = self.__data[self.__x_axis_field] - self.__x_mean
+            self.__data[self.__y_axis_zeroed] = self.__data[self.__y_axis_field] - self.__y_mean
+            pass
         else:
             self.__data[self.__x_axis_zeroed ] = self.__data[self.__x_axis_field] - self.__x_min
             self.__data[self.__y_axis_zeroed] = self.__data[self.__y_axis_field] - self.__y_min

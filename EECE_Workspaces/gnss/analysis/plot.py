@@ -73,12 +73,12 @@ def draw_euclidean_distance_plot_1():
     data1.set_x_axis_field('UTC_SEC')
     data1.set_y_axis_field('EUCLIDEAN')
 
-    data1.calibrate_graph('dist')
+    data1.calibrate_graph('hist')
 
-    chart = GraphGUI('Euclidean Distance from mean over Time for Open Area','Time (s)', 'Positional Error (m)')
+    chart = GraphGUI('Euclidean Distance from mean for Open Area', 'Positional Error (m)', 'Rate')
     chart.add_graph(data1)
 
-    chart.show(graph_type='dist')
+    chart.show(graph_type='hist',zeroed=False)
 
 ######################################################################
 
@@ -91,11 +91,11 @@ def draw_euclidean_distance_plot_2():
     data2.set_x_axis_field('UTC_SEC')
     data2.set_y_axis_field('EUCLIDEAN')
 
-    data2.calibrate_graph('dist')
+    data2.calibrate_graph('hist')
 
-    chart = GraphGUI('Euclidean Distance from mean over Time for Occluded Area','Time (s)', 'Positional Error (m)')
+    chart = GraphGUI('Euclidean Distance from mean for Occluded Area', 'Positional Error (m)', 'Rate')
     chart.add_graph(data2)
-    chart.show(graph_type='dist')
+    chart.show(graph_type='hist',zeroed=False)
 
 ######################################################################
 
