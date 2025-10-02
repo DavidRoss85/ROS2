@@ -34,12 +34,12 @@ def draw_stationary_scatterplot():
         + "\n - UTMN: "
         + str(data2.get_y_mean())
     )
-    data1.set_alpha(.1)
-    data2.set_alpha(.1)
+    data1.set_alpha(.15)
+    data2.set_alpha(.15)
 
     chart = GraphGUI('Comparison of GPS Accuracy for Open area vs Occluded area ','Deviation from mean - Easting (m)', 'Deviation from mean - Northing (m)')
-    chart.set_x_range(5)
-    chart.set_y_range(5)
+    chart.set_x_range(10)
+    chart.set_y_range(10)
     chart.add_graph(data1)
     chart.add_graph(data2)
     chart.show()
