@@ -4,18 +4,14 @@ from gps_plane import GraphGUI
 
 
 CWD = os.getcwd()
-OUTDOOR_FILE =  'gps_data/corrected_open_area.csv'
-INDOOR_FILE =  'gps_data/corrected_occuluded.csv'
-WALKING_FILE = 'gps_data/corrected_walking.csv'
+OUTDOOR_FILE =  'gps_data/open_area_football_field.csv'
+INDOOR_FILE =  'gps_data/occluded_area_inside_building.csv'
+WALKING_FILE = 'gps_data/walking_open_street.csv'
 
 OUTDOOR_FULL_PATH = os.path.join(CWD,OUTDOOR_FILE)
 OCCLUDED_FULL_PATH = os.path.join(CWD,INDOOR_FILE)
 WALKING_FULL_PATH = os.path.join(CWD,WALKING_FILE)
 
-
-DEFAULT_RANGE = 10
-
-plot_range = DEFAULT_RANGE
 
 ######################################################################
 
@@ -38,9 +34,12 @@ def draw_stationary_scatterplot():
         + "\n - UTMN: "
         + str(data2.get_y_mean())
     )
-    
+    data1.set_alpha(.1)
+    data2.set_alpha(.1)
 
     chart = GraphGUI('Comparison of GPS Accuracy for Open area vs Occluded area ','Deviation from mean - Easting (m)', 'Deviation from mean - Northing (m)')
+    chart.set_x_range(5)
+    chart.set_y_range(5)
     chart.add_graph(data1)
     chart.add_graph(data2)
     chart.show()

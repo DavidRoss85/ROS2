@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from gps_graph import GPSPlot
 
-DEFAULT_RANGE = 10
+DEFAULT_RANGE = 1
 
 class GraphGUI:
     DEFAULT_PLOT_RANGE_SCALE = 1.25
@@ -181,6 +181,10 @@ class GraphGUI:
         self.__ax_position = value
     def set_y_axis_position(self, value:str):
         self.__ay_position = value
+    def set_x_range(self, value):
+        self.__x_range = value
+    def set_y_range(self, value):
+        self.__y_range = value
 
 ##############################################################################################  
 ##############################################################################################  
