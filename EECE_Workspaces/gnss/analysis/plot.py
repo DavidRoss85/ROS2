@@ -6,7 +6,7 @@ from gps_plane import GraphGUI
 CWD = os.getcwd()
 OUTDOOR_FILE =  'gps_data/open_area_football_field.csv'
 INDOOR_FILE =  'gps_data/occluded_area_inside_building.csv'
-WALKING_FILE = 'gps_data/walking_open_street.csv'
+WALKING_FILE = 'gps_data/walking_open_street_clipped.csv'
 
 OUTDOOR_FULL_PATH = os.path.join(CWD,OUTDOOR_FILE)
 OCCLUDED_FULL_PATH = os.path.join(CWD,INDOOR_FILE)
@@ -108,6 +108,10 @@ def draw_moving_scatterplot():
         + "\n - UTMN: "
         + str(data1.get_y_mean())
     )   
+    data1.set_x_range(10)
+    data1.set_y_independent(True)
+    data1.calculate_LOBF()
+    data1.set_lobf_color('red')
 
     chart = GraphGUI('GPS Accuracy for walking data','Deviation from mean - Easting (m)', 'Deviation from mean - Northing (m)')
     chart.add_graph(data1)
@@ -125,16 +129,17 @@ def draw_moving_altitude_vs_time_plot():
 
     chart = GraphGUI('GPS Altitude Data over time for Walking','Time (s)', 'Altitude (m)')
     chart.add_graph(data1)
+    
     chart.show('line')
 
 ######################################################################
 def main():
-    draw_stationary_scatterplot()
-    draw_stationary_altitude_vs_time_plot()
-    draw_euclidean_distance_plot_1()
-    draw_euclidean_distance_plot_2()
+    # draw_stationary_scatterplot()
+    # draw_stationary_altitude_vs_time_plot()
+    # draw_euclidean_distance_plot_1()
+    # draw_euclidean_distance_plot_2()
     draw_moving_scatterplot()
-    draw_moving_altitude_vs_time_plot()
+    # draw_moving_altitude_vs_time_plot()
 
 ######################################################################
 
