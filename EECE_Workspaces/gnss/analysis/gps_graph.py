@@ -24,6 +24,12 @@ class GPSPlot:
         self.__data = None
         self.__x_range = 0
         self.__y_range = 0
+        self.__lobf_m = 0
+        self.__lobf_b = 0
+        self.__draw_lobf = False
+        self.__lobf_color = 'black'
+        self.__y_independent = False
+        self.__slope_data = None
         self.import_file(self.__csv_file)
         self.calibrate_graph()
 
@@ -49,6 +55,59 @@ class GPSPlot:
             self.__x_mean,
             self.__y_mean
         )
+
+##############################################################################################
+    
+    def calculate_LOBF(self, zeroed=True,y_independent=False):
+        #calculate slope:
+        if not zeroed:
+            self.__data['LOBF_X_DIFF'] = self.__data[self.__x_axis_field] - self.__x_mean
+            self.__data['LOBF_Y_DIFF'] = self.__data[self.__y_axis_field] - self.__y_mean
+        else:
+            self.__data['LOBF_X_DIFF'] = self.__data[self.__x_axis_zeroed] - self.__x_mean
+            self.__data['LOBF_Y_DIFF'] = self.__data[self.__y_axis_zeroed] - self.__y_mean
+
+        #Square the value that is independent:   
+        if not y_independent:
+            self.__data['LOBF_V_DIFF_SQ'] = self.__data['LOBF_X_DIFF']*self.__data['LOBF_X_DIFF']
+        else:
+            self.__data['LOBF_V_DIFF_SQ'] = self.__data['LOBF_Y_DIFF']*self.__data['LOBF_Y_DIFF']
+
+        #Multiply the axes values
+        self.__data['LOBF_XY_DIFF_PROD'] = self.__data['LOBF_X_DIFF'] * self.__data['LOBF_Y_DIFF']
+        
+        xy_diff_prod_sum = self.__data['LOBF_XY_DIFF_PROD'].sum()
+        x_diff_sq_sum = self.__data['LOBF_V_DIFF_SQ'].sum()
+
+        #Divide to get Slope:
+        self.__lobf_m = xy_diff_prod_sum/x_diff_sq_sum
+
+        #Calculate intercept
+        if not y_independent:
+            self.__lobf_b = self.__y_mean - (self.__lobf_m * self.__x_mean)
+        else:
+            self.__lobf_b - self.__x_mean - (self.__lobf_m * self.__y_mean)
+
+        ilist=[]
+        if not y_independent:
+            i_list= [x for x in range(
+                int(self.__data[self.__x_axis_zeroed if zeroed else self.__x_axis_field].min()),
+                int(self.__data[self.__x_axis_zeroed if zeroed else self.__x_axis_field].max())+1,
+                max(1,int((self.__data[self.__x_axis_zeroed if zeroed else self.__x_axis_field].max()-self.__data[self.__x_axis_zeroed if zeroed else self.__x_axis_field].min())/10))
+            )]
+        else:
+            i_list= [x for x in range(
+                int(self.__data[self.__y_axis_zeroed if zeroed else self.__y_axis_field].min()),
+                int(self.__data[self.__y_axis_zeroed if zeroed else self.__y_axis_field].max())+1,
+                max(1,int((self.__data[self.__y_axis_zeroed if zeroed else self.__y_axis_field].max()-self.__data[self.__y_axis_zeroed if zeroed else self.__y_axis_field].min())/10))
+            )]
+
+        self.__slope_data = pd.DataFrame({'LOBF_I_AXIS':i_list})
+        self.__slope_data['LOBF_V'] = (self.__lobf_m * self.__slope_data['LOBF_I_AXIS'])+ self.__lobf_b
+
+        self.__draw_lobf = True
+
+##############################################################################################
     def calibrate_graph(self, option='scatter'):
         self.__x_mean = self.__data[self.__x_axis_field].mean()
         self.__y_mean = self.__data[self.__y_axis_field].mean()
@@ -130,6 +189,30 @@ class GPSPlot:
         return self.__x_range
     def get_y_range(self):
         return self.__y_range
+    def get_lobf_slope(self):
+        return self.__lobf_m
+    def get_lobf_b(self):
+        return self.__lobf_b
+    def get_lobf_draw_state(self):
+        return self.__draw_lobf
+    def get_lobf_color(self):
+        return self.__lobf_color
+    def get_y_independent(self):
+        return self.__y_independent
+    def get_slope_data(self):
+        return self.__slope_data
+    
+    #Setters:
+    def set_x_range(self,value):
+        self.__x_range = value
+    def set_y_range(self,value):
+        self.__y_range = value
+    def set_lobf_draw_state(self, value):
+        self.__draw_lobf=value
+    def set_lobf_color(self,value):
+        self.__lobf_color = value
+    def set_y_independent(self,value):
+        self.__y_independent=value
     
 
 ##############################################################################################  

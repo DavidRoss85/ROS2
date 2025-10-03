@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from gps_graph import GPSPlot
 
-DEFAULT_RANGE = 10
+DEFAULT_RANGE = 1
 
 class GraphGUI:
     DEFAULT_PLOT_RANGE_SCALE = 1.25
@@ -68,6 +68,8 @@ class GraphGUI:
 
  ##############################################################################################     
     def apply_scatterplot_settings(self,zeroed=True):
+        
+        
         #Plot each graph in dictionary:
         for graph in self.__graph_list.values():
             self.__plot.scatter(
@@ -77,6 +79,20 @@ class GraphGUI:
                 alpha=graph.get_alpha(),
                 label=graph.get_name()
             )
+            if graph.get_lobf_draw_state():
+            # gx1=self.__x_center - self.__x_range
+            # gx2=self.__x_center + self.__x_range
+            # gm = graph.get_lobf_slope()
+
+            # gy1=gm*gx1 + graph.get_lobf_b()
+            # gy2=gm*gx2 + graph.get_lobf_b()
+
+                self.__plot.plot(
+                    graph.get_slope_data()['LOBF_I_AXIS' if graph.get_y_independent() else 'LOBF_V'],
+                    graph.get_slope_data()['LOBF_V' if graph.get_y_independent() else 'LOBF_I_AXIS'],
+                    color='red'#graph.get_lobf_color()
+                )
+
             self.calibrate_center(graph,"scatter",zeroed)
         #Set chart properties:
         self.__ax_position = 'center'
@@ -171,6 +187,7 @@ class GraphGUI:
         self.__ax.set_xlabel(self.__x_label, loc='right')
         self.__ax.set_ylabel(self.__y_label, loc='top')
         
+        
 
         #Display chart
         self.__plot.show()
@@ -181,6 +198,10 @@ class GraphGUI:
         self.__ax_position = value
     def set_y_axis_position(self, value:str):
         self.__ay_position = value
+    def set_x_range(self, value):
+        self.__x_range = value
+    def set_y_range(self, value):
+        self.__y_range = value
 
 ##############################################################################################  
 ##############################################################################################  
