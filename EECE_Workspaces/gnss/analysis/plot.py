@@ -6,7 +6,7 @@ from gps_plane import GraphGUI
 CWD = os.getcwd()
 OUTDOOR_FILE =  'gps_data/rtk_open.csv'
 INDOOR_FILE =  'gps_data/rtk_occluded.csv'
-WALKING_FILE = 'gps_data/corrected_walking.csv'
+WALKING_FILE = 'gps_data/rtk_walking.csv'
 
 OUTDOOR_FULL_PATH = os.path.join(CWD,OUTDOOR_FILE)
 OCCLUDED_FULL_PATH = os.path.join(CWD,INDOOR_FILE)
@@ -134,12 +134,12 @@ def draw_moving_altitude_vs_time_plot():
 
 ######################################################################
 def main():
-    # draw_stationary_scatterplot()
-    # draw_stationary_altitude_vs_time_plot()
-    # draw_euclidean_distance_plot_1()
-    # draw_euclidean_distance_plot_2()
+    draw_stationary_scatterplot()
+    draw_stationary_altitude_vs_time_plot()
+    draw_euclidean_distance_plot_1()
+    draw_euclidean_distance_plot_2()
     draw_moving_scatterplot()
-    # draw_moving_altitude_vs_time_plot()
+    draw_moving_altitude_vs_time_plot()
 
 ######################################################################
 

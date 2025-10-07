@@ -92,7 +92,8 @@ class GraphGUI:
                 self.__plot.plot(
                     [gx1,gx2],
                     [gy1,gy2],
-                    color='red'
+                    color=graph.get_lobf_color(),
+                    label='Line of best fit'
                 )
 
 
