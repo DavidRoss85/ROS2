@@ -188,8 +188,8 @@ class GNGGAPositionData():
 #------------------------------------------
 
     #Verify string is a GNGGA format
-    def is_GPGGA_string(self,input_string):
-        if input_string.startswith(GPGGA_HEADER):
+    def is_GNGGA_string(self,input_string):
+        if input_string.startswith(GNGGA_HEADER):
             return True
         return False
 #------------------------------------------
@@ -255,7 +255,7 @@ class GNGGAPositionData():
 #------------------------------------------
 
     def translate_string(self, string_value):
-        if not self.is_GPGGA_string(string_value):
+        if not self.is_GNGGA_string(string_value):
             self.__ok = False
             return
         self.assign_values_from_list(self.spit_encoded_string(string_value))
@@ -269,7 +269,7 @@ class GNGGAPositionData():
               +f"LON: {self.__lon}\n"
               +f"ALT: {self.__alt}\n"
               +f"HDOP: {self.__hdop}\n"
-              +f"FIX_QUAL: {self.__fix_quality}"
+              +f"FIX_QUAL: {self.__fix_quality}\n"
               +f"UTME: {self.__utmE}\n"
               +f"UTMN: {self.__utmN}\n"
               +f"ZONE: {self.__zone}\n"

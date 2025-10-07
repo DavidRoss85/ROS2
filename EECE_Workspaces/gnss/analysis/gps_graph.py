@@ -1,4 +1,7 @@
 import pandas as pd
+import numpy as np
+from scipy.optimize import least_squares
+
 
 ##############################################################################################  
 ##############################################################################################  
@@ -58,52 +61,33 @@ class GPSPlot:
 
 ##############################################################################################
     
-    def calculate_LOBF(self, zeroed=True,y_independent=False):
+    def calculate_LOBF(self, zeroed=False):
+        #calculate slope:
+
+        #Nested functions used for scipy least squares:
+        def __model(x, model_params):
+            m = model_params[0]
+            b = model_params[1]
+            y =  m * x + b
+            y = np.array(y)
+            return y
+        def __residual(initial_guesses, x, y):
+            aaa= (y - __model(x, initial_guesses)).flatten()
+            return aaa
+
         #calculate slope:
         if not zeroed:
-            self.__data['LOBF_X_DIFF'] = self.__data[self.__x_axis_field] - self.__x_mean
-            self.__data['LOBF_Y_DIFF'] = self.__data[self.__y_axis_field] - self.__y_mean
+            x = self.__data[self.__x_axis_field] - self.__x_mean
+            y = self.__data[self.__y_axis_field] - self.__y_mean
         else:
-            self.__data['LOBF_X_DIFF'] = self.__data[self.__x_axis_zeroed] - self.__x_mean
-            self.__data['LOBF_Y_DIFF'] = self.__data[self.__y_axis_zeroed] - self.__y_mean
+            x = self.__data[self.__x_axis_zeroed] - self.__x_mean
+            y = self.__data[self.__y_axis_zeroed] - self.__y_mean
 
-        #Square the value that is independent:   
-        if not y_independent:
-            self.__data['LOBF_V_DIFF_SQ'] = self.__data['LOBF_X_DIFF']*self.__data['LOBF_X_DIFF']
-        else:
-            self.__data['LOBF_V_DIFF_SQ'] = self.__data['LOBF_Y_DIFF']*self.__data['LOBF_Y_DIFF']
-
-        #Multiply the axes values
-        self.__data['LOBF_XY_DIFF_PROD'] = self.__data['LOBF_X_DIFF'] * self.__data['LOBF_Y_DIFF']
-        
-        xy_diff_prod_sum = self.__data['LOBF_XY_DIFF_PROD'].sum()
-        x_diff_sq_sum = self.__data['LOBF_V_DIFF_SQ'].sum()
-
-        #Divide to get Slope:
-        self.__lobf_m = xy_diff_prod_sum/x_diff_sq_sum
-
-        #Calculate intercept
-        if not y_independent:
-            self.__lobf_b = self.__y_mean - (self.__lobf_m * self.__x_mean)
-        else:
-            self.__lobf_b - self.__x_mean - (self.__lobf_m * self.__y_mean)
-
-        ilist=[]
-        if not y_independent:
-            i_list= [x for x in range(
-                int(self.__data[self.__x_axis_zeroed if zeroed else self.__x_axis_field].min()),
-                int(self.__data[self.__x_axis_zeroed if zeroed else self.__x_axis_field].max())+1,
-                max(1,int((self.__data[self.__x_axis_zeroed if zeroed else self.__x_axis_field].max()-self.__data[self.__x_axis_zeroed if zeroed else self.__x_axis_field].min())/10))
-            )]
-        else:
-            i_list= [x for x in range(
-                int(self.__data[self.__y_axis_zeroed if zeroed else self.__y_axis_field].min()),
-                int(self.__data[self.__y_axis_zeroed if zeroed else self.__y_axis_field].max())+1,
-                max(1,int((self.__data[self.__y_axis_zeroed if zeroed else self.__y_axis_field].max()-self.__data[self.__y_axis_zeroed if zeroed else self.__y_axis_field].min())/10))
-            )]
-
-        self.__slope_data = pd.DataFrame({'LOBF_I_AXIS':i_list})
-        self.__slope_data['LOBF_V'] = (self.__lobf_m * self.__slope_data['LOBF_I_AXIS'])+ self.__lobf_b
+        guesses = [0,0]
+        lsq_min = least_squares(__residual, guesses , args=(x.values, y.values))
+        model_vals = lsq_min.x
+        self.__lobf_m = model_vals[0]
+        self.__lobf_b = model_vals[1]
 
         self.__draw_lobf = True
 

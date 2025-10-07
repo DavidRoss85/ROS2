@@ -27,7 +27,7 @@ class GPSPublisher(Node):
         self.declare_parameter('port',port_address)
         self.__serial_port_address = self.get_parameter('port').get_parameter_value().string_value
         self.__serial_port = serial.Serial(self.__serial_port_address, BAUD_RATE,timeout=TIMEOUT)
-        self.get_logger().info(f"Listening to {port_address}\nPosting to {self.__pub_topic}")
+        self.get_logger().info(f"Listening to {self.__serial_port_address}\nPosting to {self.__pub_topic}")
         self.__poll_serial_port()
 
 #------------------------------------------
@@ -35,8 +35,8 @@ class GPSPublisher(Node):
     def __poll_serial_port(self):
         while rclpy.ok():
             if self.__serial_port.in_waiting > 0:
-                gpgga_read = self.__serial_port.readline().decode('utf-8')
-                my_position = PositionData(gpgga_read)
+                gngga_read = self.__serial_port.readline().decode('utf-8')
+                my_position = PositionData(gngga_read)
                 if my_position.is_ok():
                     self.publish_message(my_position)
 #------------------------------------------
@@ -66,7 +66,7 @@ class GPSPublisher(Node):
 
 #*******************************************************************
 
-#Listens to a ROS channel for a Customrtk, uses the GPGGA data and publishes new Customrtk message on a different channel
+#Listens to a ROS channel for a Customrtk, uses the GNGGA data and publishes new Customrtk message on a different channel
 #(Useful for correcting inaccurate data recorded in a ROS bag)
 class GPSListenPublisher(Node):
     def __init__(self, sub_topic=SUB_TOPIC, pub_topic=PUBLISH_TOPIC):
@@ -86,8 +86,8 @@ class GPSListenPublisher(Node):
 #------------------------------------------
     
     def __echo_gps_from_topic(self, message:Customrtk):
-        self.get_logger().info(f"GPGGA message: {message.gpgga_read}")
-        my_position = PositionData(message.gpgga_read)
+        self.get_logger().info(f"GNGGA message: {message.gngga_read}")
+        my_position = PositionData(message.gngga_read)
         if my_position.is_ok():
             self.publish_message(my_position)
 

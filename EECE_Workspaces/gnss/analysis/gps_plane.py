@@ -79,21 +79,29 @@ class GraphGUI:
                 alpha=graph.get_alpha(),
                 label=graph.get_name()
             )
+            self.calibrate_center(graph,"scatter",zeroed)
             if graph.get_lobf_draw_state():
-            # gx1=self.__x_center - self.__x_range
-            # gx2=self.__x_center + self.__x_range
-            # gm = graph.get_lobf_slope()
+                gx1= self.__x_center - self.__x_range
+                gx2= self.__x_center + self.__x_range
+                gm = graph.get_lobf_slope()
+                gb = graph.get_lobf_b()
+                gy1=gm*gx1 + gb
+                gy2=gm*gx2 + gb
 
-            # gy1=gm*gx1 + graph.get_lobf_b()
-            # gy2=gm*gx2 + graph.get_lobf_b()
 
                 self.__plot.plot(
-                    graph.get_slope_data()['LOBF_I_AXIS' if graph.get_y_independent() else 'LOBF_V'],
-                    graph.get_slope_data()['LOBF_V' if graph.get_y_independent() else 'LOBF_I_AXIS'],
-                    color='red'#graph.get_lobf_color()
+                    [gx1,gx2],
+                    [gy1,gy2],
+                    color='red'
                 )
 
-            self.calibrate_center(graph,"scatter",zeroed)
+
+                # self.__plot.plot(
+                #     graph.get_slope_data()['LOBF_I_AXIS' if graph.get_y_independent() else 'LOBF_V'],
+                #     graph.get_slope_data()['LOBF_V' if graph.get_y_independent() else 'LOBF_I_AXIS'],
+                #     color='red'#graph.get_lobf_color()
+                # )
+
         #Set chart properties:
         self.__ax_position = 'center'
         self.__ay_position = 'center'

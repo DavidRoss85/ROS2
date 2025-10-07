@@ -4,9 +4,9 @@ from gps_plane import GraphGUI
 
 
 CWD = os.getcwd()
-OUTDOOR_FILE =  'gps_data/open_area_football_field.csv'
-INDOOR_FILE =  'gps_data/occluded_area_inside_building.csv'
-WALKING_FILE = 'gps_data/walking_open_street_clipped.csv'
+OUTDOOR_FILE =  'gps_data/rtk_open.csv'
+INDOOR_FILE =  'gps_data/rtk_occluded.csv'
+WALKING_FILE = 'gps_data/corrected_walking.csv'
 
 OUTDOOR_FULL_PATH = os.path.join(CWD,OUTDOOR_FILE)
 OCCLUDED_FULL_PATH = os.path.join(CWD,INDOOR_FILE)
@@ -109,7 +109,7 @@ def draw_moving_scatterplot():
         + str(data1.get_y_mean())
     )   
     data1.set_x_range(10)
-    data1.set_y_independent(True)
+    # data1.set_y_independent(True)
     data1.calculate_LOBF()
     data1.set_lobf_color('red')
 

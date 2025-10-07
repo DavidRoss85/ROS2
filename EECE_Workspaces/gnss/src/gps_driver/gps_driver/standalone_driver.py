@@ -40,6 +40,8 @@ BAUD_RATE = 4800
 TIMEOUT = 0.1   #10Hz
 DEFAULT_PORT = '/dev/ttyUSB0'
 
+#*******************************************************************
+
 #GPS Publishing Node class. Will grab data from the serial port and publish
 class GPSPublisher(Node):
     def __init__(self, port_address=DEFAULT_PORT):
@@ -50,7 +52,7 @@ class GPSPublisher(Node):
         self.declare_parameter('port',port_address)
         self.__serial_port_address = self.get_parameter('port').get_parameter_value().string_value
         self.__serial_port = serial.Serial(self.__serial_port_address, BAUD_RATE,timeout=TIMEOUT)
-        self.get_logger().info(f"Listening to {port_address}\nPosting to {self.__pub_topic}")
+        self.get_logger().info(f"Listening to {self.__serial_port_address}\nPosting to {self.__pub_topic}")
         self.__poll_serial_port()
 
 #------------------------------------------
