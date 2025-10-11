@@ -93,7 +93,7 @@ class GraphGUI:
                     [gx1,gx2],
                     [gy1,gy2],
                     color=graph.get_lobf_color(),
-                    label='Line of best fit'
+                    label=f'Line of best fit: y={gm:.2}x+{gb:.2}'
                 )
 
 
