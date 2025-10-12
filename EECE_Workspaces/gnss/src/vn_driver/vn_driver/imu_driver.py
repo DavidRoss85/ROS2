@@ -26,16 +26,24 @@ class IMUPublisher(Node):
         super().__init__('imu_publisher')
         self.__pub_topic = topic
         self.__publisher = self.create_publisher(Vectornav,self.__pub_topic,MAX_MSG)
-        # self.declare_parameter('port',port_address)
-        # self.__serial_port_address = self.get_parameter('port').get_parameter_value().string_value
-        # self.__serial_port = serial.Serial(self.__serial_port_address, BAUD_RATE,timeout=TIMEOUT)
+        self.declare_parameter('port',port_address)
+        self.__serial_port_address = self.get_parameter('port').get_parameter_value().string_value
+        self.__serial_port = serial.Serial(self.__serial_port_address, BAUD_RATE,timeout=TIMEOUT)
         self.get_logger().info(f"Listening to {self.__serial_port_address}\nPosting to {self.__pub_topic}")
-        # self.__poll_serial_port()
+        self.__poll_serial_port()
 
-        #Testing:
-        self.__timer = self.create_timer(1,self.publish_message(PoseData(TEST_STRING)))
+        #Uncomment Only for Testing:
+        # self.__timer = self.create_timer(1,self.__test_message)
 
     #------------------------------------------
+    #This fuction is used for testing publisher
+    def __test_message(self):
+        p= PoseData(TEST_STRING)
+        p.set_header(f"new_header - {p.get_time()}")
+        self.publish_message(p)
+
+    #------------------------------------------
+    # Poll the serial port and publish message if valid
     def __poll_serial_port(self):
         while rclpy.ok():
             if self.__serial_port.in_waiting > 0:
@@ -44,12 +52,12 @@ class IMUPublisher(Node):
                 if my_pose.is_ok():
                     self.__publish_message(my_pose)
     #------------------------------------------
-
+    #Close open ports
     def close_ports(self):
         self.__serial_port.close()
 
     #------------------------------------------
-
+    # Extract PoseData values and publish on topic
     def publish_message(self, message:PoseData):
         imu = Imu()
         mag_field= MagneticField()
@@ -71,8 +79,16 @@ class IMUPublisher(Node):
 #*******************************************************************
 #*******************************************************************
 
-def main():
-    pass
+def main(args=None):
+    print("Running\n")
+
+    rclpy.init(args=args)
+    imu_publisher = IMUPublisher(DEFAULT_PORT)
+    rclpy.spin(imu_publisher)
+
+    # imu_publisher.close_ports()
+    imu_publisher.destroy_node()
+    rclpy.shutdown()
 
 if __name__ == "__main__":
     main()

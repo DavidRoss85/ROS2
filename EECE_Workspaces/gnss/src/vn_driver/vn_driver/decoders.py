@@ -187,10 +187,11 @@ class VNYMRPositonData():
     def __str__(self):
         return (
             f"Header: {self.__header}\n" +
+            f"Time: {self.get_time_in_seconds()}\n"
             f"Pose angle:\n" +
-            f"\tRoll: {self.__pose_angle.x}"+
-            f"\tPitch: {self.__pose_angle.y}"+
-            f"\tYaw: {self.__pose_angle.z}"+
+            f"\tRoll: {self.__pose_angle.x}\n"+
+            f"\tPitch: {self.__pose_angle.y}\n"+
+            f"\tYaw: {self.__pose_angle.z}\n"+
             f"Linear Velocity:\n"+
             f"\tx: {self.__linear_vel.x}\n"+
             f"\ty: {self.__linear_vel.y}\n"+
@@ -200,10 +201,10 @@ class VNYMRPositonData():
             f"\ty: {self.__angular_vel.y}\n"+
             f"\tz: {self.__angular_vel.z}\n"+
             f"Magnetic:\n"+
-            f"\tx: {self.__magnetic_pose.x}"+
-            f"\ty: {self.__magnetic_pose.y}"+
-            f"\tz: {self.__magnetic_pose.z}"+
-            f"String: {self.__string_data}"+
+            f"\tx: {self.__magnetic_pose.x}\n"+
+            f"\ty: {self.__magnetic_pose.y}\n"+
+            f"\tz: {self.__magnetic_pose.z}\n"+
+            f"String: {self.__string_data}\n"+
             f"Ok: {self.__ok}"
         )
     
@@ -224,7 +225,7 @@ class VNYMRPositonData():
     def get_time(self)->time.struct_time:
         return self.__time
     def get_time_in_seconds(self)->float:
-        return time.mktime(self.__time.tm_sec)
+        return time.mktime(self.__time)
     def get_time_nanoseconds(self)->int:
         return (self.get_time_in_seconds()%1)*1000000000
     def get_pose_angle(self)->Vector3D:
