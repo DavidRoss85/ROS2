@@ -14,7 +14,11 @@ MAX_MSG = 10    #ROS2 Maximum messages allowed at once
 FREQUENCY = 0.1 #10Hz
 BAUD_RATE = 115200  #Serial port baud
 TIMEOUT = 0.1   #timeout rate for serial port
-DEFAULT_PORT = "/dev/ttyUSB0"   #Default port to query
+DEFAULT_PORT = "/dev/pts/7"#/dev/ttyUSB0"   #Default port to query
+
+ORIENTATION_IN_DEGREES = True
+ANGULAR_VEL_IN_DEGREES = False
+MAGNETIC_IN_GAUSS = True
 
 
 #*******************************************************************
@@ -48,7 +52,12 @@ class IMUPublisher(Node):
         while rclpy.ok():
             if self.__serial_port.in_waiting > 0:
                 string_read = self.__serial_port.readline().decode('utf-8')
-                my_pose = PoseData(string_read)
+                my_pose = PoseData(
+                    string_read,
+                    orientation_in_degrees=ORIENTATION_IN_DEGREES,
+                    angular_vel_in_degrees=ANGULAR_VEL_IN_DEGREES,
+                    magnetic_in_gauss=MAGNETIC_IN_GAUSS
+                )
                 if my_pose.is_ok():
                     self.__publish_message(my_pose)
     #------------------------------------------
@@ -58,7 +67,7 @@ class IMUPublisher(Node):
 
     #------------------------------------------
     # Extract PoseData values and publish on topic
-    def publish_message(self, message:PoseData):
+    def __publish_message(self, message:PoseData):
         #Create IMU and MagneticField objects for holding data:
         imu = Imu()
         mag_field= MagneticField()
@@ -84,7 +93,7 @@ class IMUPublisher(Node):
         msg.raw_imu_data = message.get_raw_string()
         
         self.__publisher.publish(msg)
-        self.get_logger().info(f"Publishing gps Data:\n{message}")
+        self.get_logger().info(f"Publishing IMU Data:\n{message}")
 
 #*******************************************************************
 #*******************************************************************

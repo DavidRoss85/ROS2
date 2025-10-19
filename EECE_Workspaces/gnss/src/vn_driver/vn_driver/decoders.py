@@ -74,7 +74,6 @@ float64[9] magnetic_field_covariance       # Row major about x, y, z axes
 #imports:
 import time
 import math
-import transform3d
 from tf_transformations import quaternion_from_euler # Converts euler to quaternion
 
 #For importing directly from a ROS2 message
@@ -338,6 +337,11 @@ class VNYMRPositonData():
             f"\tx: {self.__magnetic_pose.x}\n"+
             f"\ty: {self.__magnetic_pose.y}\n"+
             f"\tz: {self.__magnetic_pose.z}\n"+
+            f"Quaternion:\n"+
+            f"\tx: {self.__quaternion.x}\n"+
+            f"\ty: {self.__quaternion.y}\n"+
+            f"\tz: {self.__quaternion.z}\n"+
+            f"\tw: {self.__quaternion.w}\n"+
             f"String: {self.__string_data}\n"+
             f"Ok: {self.__ok}"
         )
