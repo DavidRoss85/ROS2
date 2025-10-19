@@ -59,15 +59,22 @@ class IMUPublisher(Node):
     #------------------------------------------
     # Extract PoseData values and publish on topic
     def publish_message(self, message:PoseData):
+        #Create IMU and MagneticField objects for holding data:
         imu = Imu()
         mag_field= MagneticField()
-        vector_m = message.get_vector_matrix()  #get vector with values
+
+        # Get 2D list of vectors from message:
+        vector_m = message.get_2Dvector_list()  
         # Unpack linear list:
         imu.linear_acceleration.x, imu.linear_acceleration.y, imu.linear_acceleration.z = vector_m[1]
         # Unpack angular list:
         imu.angular_velocity.x, imu.angular_velocity.y,imu.angular_velocity.z = vector_m[2]
         # Unpack magnetic list:
         mag_field.magnetic_field.x, mag_field.magnetic_field.y, mag_field.magnetic_field.z = vector_m[3]
+        # Unpack quaternion list:
+        imu.orientation.x, imu.orientation.y, imu.orientation.z, imu.orientation.w = vector_m[4]
+
+        # Create Vectornav message and publish:
         msg = Vectornav()
         msg.header.frame_id = message.get_header()
         msg.header.stamp.sec = int(message.get_time_in_seconds())

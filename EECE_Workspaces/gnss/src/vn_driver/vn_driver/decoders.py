@@ -369,14 +369,15 @@ class VNYMRPositonData():
     def get_magnetic_pose(self)->Vector3D:
         return self.__magnetic_pose
     
-    def get_vector_matrix(self)->list:
-        value_matrix = [
+    def get_2Dvector_list(self)->list:
+        value_list = [
             self.__pose_angle.get_vector_array(),
             self.__linear_vel.get_vector_array(),
             self.__angular_vel.get_vector_array(),
-            self.__magnetic_pose.get_vector_array()
+            self.__magnetic_pose.get_vector_array(),
+            self.__quaternion.get_vector_array()
         ]
-        return value_matrix
+        return value_list
     
     def get_time_struct(self)->time.struct_time:
         return time.localtime(self.__time/SECOND_TO_NANO_FACTOR)
