@@ -62,8 +62,11 @@ class IMUPublisher(Node):
         imu = Imu()
         mag_field= MagneticField()
         vector_m = message.get_vector_matrix()  #get vector with values
+        # Unpack linear list:
         imu.linear_acceleration.x, imu.linear_acceleration.y, imu.linear_acceleration.z = vector_m[1]
+        # Unpack angular list:
         imu.angular_velocity.x, imu.angular_velocity.y,imu.angular_velocity.z = vector_m[2]
+        # Unpack magnetic list:
         mag_field.magnetic_field.x, mag_field.magnetic_field.y, mag_field.magnetic_field.z = vector_m[3]
         msg = Vectornav()
         msg.header.frame_id = message.get_header()

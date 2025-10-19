@@ -74,6 +74,12 @@ float64[9] magnetic_field_covariance       # Row major about x, y, z axes
 #imports:
 import time
 
+#For importing directly from a ROS2 message
+from vn_interfaces.msg import Vectornav
+from std_msgs.msg import String
+from sensor_msgs.msg import Imu
+from sensor_msgs.msg import MagneticField
+
 # Global Constants:
 SAMPLE_DATA = "$VNYMR,Yaw,Pitch,Roll,MagX,MagY,MagZ,AccelX,AccelY,AccelZ,GyroX,GyroY,GyroZ*CS" #Sample VNYMR string
 
@@ -93,6 +99,10 @@ ACCELZ_INDEX = 9
 GYROX_INDEX = 10
 GYROY_INDEX = 11
 GYROZ_INDEX = 12
+CHECKSUM_DELIMITER = "*"
+VALUE_DELIMITER = ","
+
+SECOND_TO_NANO_FACTOR = 1e9
 
 #*******************************************************************
 #*******************************************************************
@@ -119,7 +129,7 @@ class VNYMRPositonData():
     #Constructor    
     def __init__(self, string_data:str=""):
         self.__header = "imu1_frame"    #Header title
-        self.__time = time.localtime()  #For timestamps
+        self.__time = time.time_ns()  #For timestamps
         self.__pose_angle = Vector3D(0,0,0)     #roll,pitch,yaw
         self.__linear_vel = Vector3D(0,0,0)     #velocity x,y,z
         self.__angular_vel = Vector3D(0,0,0)    #angular velocity x,y,z
@@ -131,63 +141,133 @@ class VNYMRPositonData():
     #------------------------------------------
     #Verifies if the input string is valid:    
     def __is_valid_string(self, input_string:str)->bool:
-        if input_string.startswith(VNYMR_HEADER):
-            return True
+        checksum_value = '' #Variable to store the checksum at the end of the string
+
+        if input_string.startswith(VNYMR_HEADER) and CHECKSUM_DELIMITER in input_string:
+            #Separate the checksum at the end of the string:
+            string_and_checksum = input_string.split(CHECKSUM_DELIMITER)
+            data_string = string_and_checksum[0][1:]
+            checksum_value = string_and_checksum[1].rstrip()
+            # Calculate checksum:
+            new_checksum_value = 0
+            for character in data_string:
+                new_checksum_value ^= ord(character)
+
+            new_checksum_string = f"{new_checksum_value:02X}"
+            if new_checksum_string == checksum_value:
+                return True
         return False
     
     #------------------------------------------
     #Splits string into separate values. Returns a list of values:
     def __split_encoded_string(self, input_string:str)->list:
-        string_list = input_string.split(",")
-        for index, item in enumerate(string_list):
+        
+        #Separate the checksum at the end of the string:
+        string_and_checksum = input_string.split(CHECKSUM_DELIMITER)
+        data_string = string_and_checksum[0][1:]
+
+        string_list = data_string.split(VALUE_DELIMITER)   # Split string into values separated by comma
+        
+        for index, item in enumerate(string_list):    
+            #Filter out blank values and replace with 0
             if item == '' or item == None or item.upper() == "NAN":
                 string_list[index] = '0'
+        
         return string_list
 
     #------------------------------------------
     # Takes a list of values and assigns them to members based on index
     def __assign_values_from_list(self, value_list:list):
-
-        #Set pose:
-        self.__pose_angle.set_vector_array(
-            float(value_list[ROLL_INDEX]),
-            float(value_list[PITCH_INDEX]),
-            float(value_list[YAW_INDEX])
-        )
-        #Set linear vel:
-        self.__linear_vel.set_vector_array(
-            float(value_list[ACCELX_INDEX]),
-            float(value_list[ACCELY_INDEX]),
-            float(value_list[ACCELZ_INDEX]),
-        )
-        #Set angular velocity:
-        self.__angular_vel.set_vector_array(
-            float(value_list[GYROX_INDEX]),
-            float(value_list[GYROY_INDEX]),
-            float(value_list[GYROZ_INDEX]),
-        )
-        #Set magnetic values:
-        self.__magnetic_pose.set_vector_array(
-            float(value_list[MAGX_INDEX]),
-            float(value_list[MAGY_INDEX]),
-            float(value_list[MAGZ_INDEX]),
-        )
-
+        try:
+            #Set pose:
+            self.__pose_angle.set_vector_array(
+                float(value_list[ROLL_INDEX]),
+                float(value_list[PITCH_INDEX]),
+                float(value_list[YAW_INDEX])
+            )
+            #Set linear vel:
+            self.__linear_vel.set_vector_array(
+                float(value_list[ACCELX_INDEX]),
+                float(value_list[ACCELY_INDEX]),
+                float(value_list[ACCELZ_INDEX]),
+            )
+            #Set angular velocity:
+            self.__angular_vel.set_vector_array(
+                float(value_list[GYROX_INDEX]),
+                float(value_list[GYROY_INDEX]),
+                float(value_list[GYROZ_INDEX]),
+            )
+            #Set magnetic values:
+            self.__magnetic_pose.set_vector_array(
+                float(value_list[MAGX_INDEX]),
+                float(value_list[MAGY_INDEX]),
+                float(value_list[MAGZ_INDEX]),
+            )
+        except:
+            self.__ok = False
     #------------------------------------------
     # Takes a VNYMR string and stores values to self
     def __translate_string(self, string_value:str):
         if not self.__is_valid_string(string_value):
             self.__ok = False
             return
-        self.__assign_values_from_list(self.__split_encoded_string(string_value))
         self.__ok = True
+        self.__assign_values_from_list(self.__split_encoded_string(string_value))
 
+    #------------------------------------------
+    #Imports from ROS2 msg
+    def import_vectornav_msg(self, msg:Vectornav):
+        imu = Imu()
+        mag_field = MagneticField()
+        head = String()
+        
+        # Try to Collect data from msg:
+        try:
+            head = msg.header.frame_id
+            seconds = msg.header.stamp.sec
+            nanosecs = msg.header.stamp.nanosec
+            imu = msg.imu
+            mag_field = msg.mag_field
+        except:
+            self.__ok = False
+            return
+        
+        # Attempt to fetch the string data if available:
+        try:
+            raw_imu_data = msg.raw
+        except:
+            try:
+                raw_imu_data = msg.raw_imu_data
+            except:
+                raw_imu_data = None
+
+        # Exit if invalid string:
+        if raw_imu_data is not None and not self.__is_valid_string(raw_imu_data):
+            self.__ok = False
+            return
+        
+        # Assign collected data to object members:
+        self.__header = head
+        self.__time = (seconds*SECOND_TO_NANO_FACTOR + nanosecs)
+        self.__linear_vel.set_vector_array(
+            imu.linear_acceleration.x, imu.linear_acceleration.y, imu.linear_acceleration.z
+        )
+        self.__angular_vel.set_vector_array(
+            imu.angular_velocity.x, imu.angular_velocity.y,imu.angular_velocity.z
+        )
+        self.__magnetic_pose.set_vector_array(
+            mag_field.magnetic_field.x, mag_field.magnetic_field.y, mag_field.magnetic_field.z
+        )
+        self.__string_data = "No string data" if raw_imu_data is None else raw_imu_data
+        self.__ok = True
+        
     #------------------------------------------
     #Returns printout
     def __str__(self):
         return (
             f"Header: {self.__header}\n" +
-            f"Time: {self.get_time_in_seconds()}\n"
+            f"Time: {self.get_time_in_seconds()}\n"+
+            f"Nano time: {self.__time}\n"+
             f"Pose angle:\n" +
             f"\tRoll: {self.__pose_angle.x}\n"+
             f"\tPitch: {self.__pose_angle.y}\n"+
@@ -214,6 +294,8 @@ class VNYMRPositonData():
     #Setters:
     def set_header(self, value:str):
         self.__header = value
+    def set_time(self, seconds:float):
+        self.__time = seconds*SECOND_TO_NANO_FACTOR
     
     #Getters:
     def is_ok(self)->bool:
@@ -222,12 +304,6 @@ class VNYMRPositonData():
         return self.__header
     def get_raw_string(self)->str:
         return self.__string_data
-    def get_time(self)->time.struct_time:
-        return self.__time
-    def get_time_in_seconds(self)->float:
-        return time.mktime(self.__time)
-    def get_time_nanoseconds(self)->int:
-        return (self.get_time_in_seconds()%1)*1000000000
     def get_pose_angle(self)->Vector3D:
         return self.__pose_angle
     def get_angular_velocity(self)->Vector3D:
@@ -236,6 +312,7 @@ class VNYMRPositonData():
         return self.__linear_vel
     def get_magnetic_pose(self)->Vector3D:
         return self.__magnetic_pose
+    
     def get_vector_matrix(self)->list:
         value_matrix = [
             self.__pose_angle.get_vector_array(),
@@ -244,6 +321,20 @@ class VNYMRPositonData():
             self.__magnetic_pose.get_vector_array()
         ]
         return value_matrix
+    
+    def get_time_struct(self)->time.struct_time:
+        return time.localtime(self.__time/SECOND_TO_NANO_FACTOR)
+    
+    def get_time_in_seconds(self)->float:
+        return self.__time/SECOND_TO_NANO_FACTOR
+    
+    def get_time_in_nanoseconds(self)->int:
+        return self.__time
+    
+    def get_remainder_nanoseconds(self)->int:
+        seconds = int(self.__time/SECOND_TO_NANO_FACTOR)*SECOND_TO_NANO_FACTOR
+        nanoseconds = self.__time - seconds
+        return nanoseconds
 #*******************************************************************
 #*******************************************************************
 
