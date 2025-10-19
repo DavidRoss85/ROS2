@@ -71,7 +71,7 @@ class IMUPublisher(Node):
         msg = Vectornav()
         msg.header.frame_id = message.get_header()
         msg.header.stamp.sec = int(message.get_time_in_seconds())
-        msg.header.stamp.nanosec = int(message.get_time_nanoseconds())
+        msg.header.stamp.nanosec = int(message.get_remainder_nanoseconds())
         msg.imu = imu
         msg.mag_field = mag_field
         msg.raw_imu_data = message.get_raw_string()

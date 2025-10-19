@@ -73,12 +73,17 @@ float64[9] magnetic_field_covariance       # Row major about x, y, z axes
 
 #imports:
 import time
+import math
+import transform3d
+from tf_transformations import quaternion_from_euler # Converts euler to quaternion
 
 #For importing directly from a ROS2 message
 from vn_interfaces.msg import Vectornav
+from geometry_msgs.msg import Quaternion
 from std_msgs.msg import String
 from sensor_msgs.msg import Imu
 from sensor_msgs.msg import MagneticField
+
 
 # Global Constants:
 SAMPLE_DATA = "$VNYMR,Yaw,Pitch,Roll,MagX,MagY,MagZ,AccelX,AccelY,AccelZ,GyroX,GyroY,GyroZ*CS" #Sample VNYMR string
@@ -103,6 +108,7 @@ CHECKSUM_DELIMITER = "*"
 VALUE_DELIMITER = ","
 
 SECOND_TO_NANO_FACTOR = 1e9
+GAUSS_TO_TESLA_CONVERSION = 1e-4
 
 #*******************************************************************
 #*******************************************************************
@@ -124,17 +130,44 @@ class Vector3D():
 
 #*******************************************************************
 #*******************************************************************
+# Object to store a 4D Vector
+class Vector4D():
+    def __init__(self, x:float=0.0,y:float=0.0,z:float=0.0,w:float=0.0):
+        self.x=x
+        self.y=y
+        self.z=z
+        self.w=w
+    
+    def get_vector_array(self)->list: #Retuns a list containing [x,y,z,w]
+        v_list = [self.x,self.y,self.z,self.w]
+        return v_list
+    
+    def set_vector_array(self,x:float=None,y:float=None,z:float=None,w:float=None):
+        self.x = x if x!=None else self.x
+        self.y = y if y!=None else self.y
+        self.z = z if z!=None else self.z
+        self.w = w if w!=None else self.w
+
+#*******************************************************************
+#*******************************************************************
 # Position data for VectorNav IMU
 class VNYMRPositonData():
     #Constructor    
-    def __init__(self, string_data:str=""):
+    def __init__(
+            self, string_data:str="",
+            orientation_in_degrees:bool=True, angular_vel_in_degrees:bool=True, magnetic_in_gauss:bool=True, 
+        ):
         self.__header = "imu1_frame"    #Header title
         self.__time = time.time_ns()  #For timestamps
+        self.__quaternion = Vector4D(0,0,0,0)   #x,y,z,w
         self.__pose_angle = Vector3D(0,0,0)     #roll,pitch,yaw
         self.__linear_vel = Vector3D(0,0,0)     #velocity x,y,z
         self.__angular_vel = Vector3D(0,0,0)    #angular velocity x,y,z
         self.__magnetic_pose = Vector3D(0,0,0)  #magnetic values
         self.__string_data = string_data        #original string input
+        self.__convert_orientation = orientation_in_degrees   #Trigger on whether to apply degrees to radian conversion on roll,pitch,yaw values
+        self.__convert_angular = angular_vel_in_degrees   #Trigger on whether to apply degrees to radian conversion on angular values
+        self.__convert_magnet = magnetic_in_gauss  #Trigger on whether to apply gauss to tesla conversion on incoming magnetic values
         self.__ok = False       #Indicator if conversion was ok
         self.__translate_string(string_data)
 
@@ -180,28 +213,46 @@ class VNYMRPositonData():
     def __assign_values_from_list(self, value_list:list):
         try:
             #Set pose:
+            roll = float(value_list[ROLL_INDEX])
+            pitch = float(value_list[PITCH_INDEX])
+            yaw = float(value_list[YAW_INDEX])
             self.__pose_angle.set_vector_array(
-                float(value_list[ROLL_INDEX]),
-                float(value_list[PITCH_INDEX]),
-                float(value_list[YAW_INDEX])
+                math.radians(roll) if self.__convert_orientation else roll,
+                math.radians(pitch) if self.__convert_orientation else pitch,
+                math.radians(yaw) if self.__convert_orientation else yaw,
             )
-            #Set linear vel:
+            # Set linear vel:
             self.__linear_vel.set_vector_array(
                 float(value_list[ACCELX_INDEX]),
                 float(value_list[ACCELY_INDEX]),
                 float(value_list[ACCELZ_INDEX]),
             )
-            #Set angular velocity:
+            # Set angular velocity:
+            ax=float(value_list[GYROX_INDEX])
+            ay=float(value_list[GYROY_INDEX])
+            az=float(value_list[GYROZ_INDEX])
             self.__angular_vel.set_vector_array(
-                float(value_list[GYROX_INDEX]),
-                float(value_list[GYROY_INDEX]),
-                float(value_list[GYROZ_INDEX]),
+                math.radians(ax) if self.__convert_angular else ax,
+                math.radians(ay) if self.__convert_angular else ay,
+                math.radians(az) if self.__convert_angular else az,
             )
-            #Set magnetic values:
+            # Set magnetic values:
+            mx=float(value_list[MAGX_INDEX])
+            my=float(value_list[MAGY_INDEX])
+            mz=float(value_list[MAGZ_INDEX])
             self.__magnetic_pose.set_vector_array(
-                float(value_list[MAGX_INDEX]),
-                float(value_list[MAGY_INDEX]),
-                float(value_list[MAGZ_INDEX]),
+                (mx*GAUSS_TO_TESLA_CONVERSION) if self.__convert_magnet else mx,
+                (my*GAUSS_TO_TESLA_CONVERSION) if self.__convert_magnet else my,
+                (mz*GAUSS_TO_TESLA_CONVERSION) if self.__convert_magnet else mz
+            )
+            # Set quaternion:
+            qx,qy,qz,qw = quaternion_from_euler(
+                self.__pose_angle.x,
+                self.__pose_angle.y,
+                self.__pose_angle.z
+            )
+            self.__quaternion.set_vector_array(
+                qx,qy,qz,qw
             )
         except:
             self.__ok = False
@@ -220,7 +271,7 @@ class VNYMRPositonData():
         imu = Imu()
         mag_field = MagneticField()
         head = String()
-        
+
         # Try to Collect data from msg:
         try:
             head = msg.header.frame_id
@@ -254,6 +305,9 @@ class VNYMRPositonData():
         )
         self.__angular_vel.set_vector_array(
             imu.angular_velocity.x, imu.angular_velocity.y,imu.angular_velocity.z
+        )
+        self.__quaternion.set_vector_array(
+            imu.orientation.x, imu.orientation.y, imu.orientation.z, imu.orientation.w
         )
         self.__magnetic_pose.set_vector_array(
             mag_field.magnetic_field.x, mag_field.magnetic_field.y, mag_field.magnetic_field.z
@@ -304,6 +358,8 @@ class VNYMRPositonData():
         return self.__header
     def get_raw_string(self)->str:
         return self.__string_data
+    def get_quaternion(self)->Vector4D:
+        return self.__quaternion
     def get_pose_angle(self)->Vector3D:
         return self.__pose_angle
     def get_angular_velocity(self)->Vector3D:
