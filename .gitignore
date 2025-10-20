@@ -12,4 +12,5 @@ venv/
 **/.env
 **/gnss/bag_data/
 **/gnss/gps_data/
+**/gnss/imu_data/
 **/__pycache__/
