@@ -1,8 +1,11 @@
+import os
 import pandas as pd
 import numpy as np
 import math
+import time
 import allantools
 from scipy.optimize import least_squares
+
 
 
 ##############################################################################################  
@@ -37,6 +40,8 @@ class GPSPlot:
         self.__y_independent = False
         self.__allan_series = None
         self.__slope_data = None
+        self.__CWD = os.getcwd()
+        self.__ALLAN_FILE = os.path.join(self.__CWD,f'imu_data/{self.__name}_allan_dev.csv')
         self.import_file(self.__csv_file)
         self.calibrate_graph()
 
@@ -101,6 +106,10 @@ class GPSPlot:
 
 ##############################################################################################
     def convert_quat_to_euler(self, x_field,y_field,z_field,w_field, func, degrees=False, new_field_prefix='CONVERTED_'):
+
+        now= time.time()
+        print(f"Starting quaternion to euler conversion at time: {now}")
+
         # Compute euler angles row-wise to avoid passing pandas Series into transforms3d
         def _row_to_euler(row):
             qx = row[x_field]
@@ -119,9 +128,14 @@ class GPSPlot:
         self.__data[new_field_prefix + 'PITCH'] = euler_df.iloc[:, 1].values
         self.__data[new_field_prefix + 'YAW'] = euler_df.iloc[:, 2].values
 
+        print(f"Completed quaternion to euler conversion in {time.time() - now} seconds.")
+
 ##############################################################################################
     def generate_allan_dev_series(self, time_field:str='TIME', data_field:str='GYRO'):
         
+        now = time.time()
+        print(f"Starting Allan deviation calculation at time: {now}")
+
         frequency = 1.0 / np.mean(np.diff(self.__data[time_field]))   # sampling rate
         data = self.__data[data_field].values                # numeric data only
 
@@ -131,7 +145,9 @@ class GPSPlot:
         # --- make a new pandas Series ---
         allan_series = pd.Series(data=adev, index=taus, name='Allan Deviation')
         self.__allan_series = allan_series
+        allan_series.to_csv(self.__ALLAN_FILE)
 
+        print(f"Completed Allan deviation calculation in {time.time() - now} seconds.")
 ##############################################################################################
     def calibrate_graph(self, option='scatter'):
         self.__x_mean = self.__data[self.__x_axis_field].mean()
