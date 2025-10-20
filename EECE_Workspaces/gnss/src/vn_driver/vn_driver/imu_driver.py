@@ -9,9 +9,10 @@ from sensor_msgs.msg import Imu
 from sensor_msgs.msg import MagneticField
 from .decoders import VNYMRPositonData as PoseData, TEST_STRING
 # Global Constants:
-PUB_TOPIC = "nav" #ROS2 topic to publish data on
+PUB_TOPIC = "imu" #ROS2 topic to publish data on
 MAX_MSG = 10    #ROS2 Maximum messages allowed at once
 FREQUENCY = 0.1 #10Hz
+POLL_RATE = 40  #IMU Poll rate in Hz
 BAUD_RATE = 115200  #Serial port baud
 TIMEOUT = 0.1   #timeout rate for serial port
 DEFAULT_PORT = "/dev/pts/7"#/dev/ttyUSB0"   #Default port to query
@@ -31,8 +32,10 @@ class IMUPublisher(Node):
         self.__pub_topic = topic
         self.__publisher = self.create_publisher(Vectornav,self.__pub_topic,MAX_MSG)
         self.declare_parameter('port',port_address)
+        self.__serial_port = serial.Serial()
         self.__serial_port_address = self.get_parameter('port').get_parameter_value().string_value
-        self.__serial_port = serial.Serial(self.__serial_port_address, BAUD_RATE,timeout=TIMEOUT)
+
+        self.__serial_port = self.configure_serial_port(self.__serial_port_address, BAUD_RATE,timeout=TIMEOUT)
         self.get_logger().info(f"Listening to {self.__serial_port_address}\nPosting to {self.__pub_topic}")
         self.__poll_serial_port()
 
@@ -47,6 +50,17 @@ class IMUPublisher(Node):
         self.publish_message(p)
 
     #------------------------------------------
+    # Configure the serial port
+    def configure_serial_port(self,port_address,baud_rate=BAUD_RATE,timeout=TIMEOUT,poll_rate=POLL_RATE):
+        self.__serial_port.close()
+        serial_port = serial.Serial(port_address, BAUD_RATE,timeout=TIMEOUT)
+        self.__serial_port_address = port_address
+        # Configure IMU Poll rate here:
+        # serial_port.write(f"$VRWRG,06,28*XX\r\n".encode('utf-8'))  #Set to binary output
+        serial_port.write(f"$VNWRG,07,{poll_rate}*XX\r\n".encode('utf-8'))  #Set Poll rate
+        self.get_logger().info(f"Reconfigured device to {self.__serial_port_address} at {baud_rate} baud, polling {poll_rate}/s.")
+        return serial_port
+    #------------------------------------------
     # Poll the serial port and publish message if valid
     def __poll_serial_port(self):
         while rclpy.ok():
@@ -59,7 +73,7 @@ class IMUPublisher(Node):
                     magnetic_in_gauss=MAGNETIC_IN_GAUSS
                 )
                 if my_pose.is_ok():
-                    self.__publish_message(my_pose)
+                    self.publish_message(my_pose)
     #------------------------------------------
     #Close open ports
     def close_ports(self):
@@ -67,7 +81,7 @@ class IMUPublisher(Node):
 
     #------------------------------------------
     # Extract PoseData values and publish on topic
-    def __publish_message(self, message:PoseData):
+    def publish_message(self, message:PoseData):
         #Create IMU and MagneticField objects for holding data:
         imu = Imu()
         mag_field= MagneticField()

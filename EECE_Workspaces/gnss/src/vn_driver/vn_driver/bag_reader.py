@@ -7,25 +7,27 @@ from rosbags.typesys import Stores, get_typestore
 from vn_interfaces.msg import Vectornav    #Custom interface
 from decoders import VNYMRPositonData as PoseData, Vector3D
 
-FILE_HEADER = "HEADER,TIME_SECS,TIME_NANO,LIN_X,LIN_Y,LIN_Z,ANG_X,ANG_Y,ANG_Z,MAG_X,MAG_Y,MAG_Z,QUAT_X,QUAT_Y,QUAT_Z,QUAT_W,STRING,,,,,,,,,,,,,,,,"
+FILE_HEADER = "HEADER,TIME_SECS,TIME_NANO,LIN_X,LIN_Y,LIN_Z,ANG_X,ANG_Y,ANG_Z,MAG_X,MAG_Y,MAG_Z,QUAT_X,QUAT_Y,QUAT_Z,QUAT_W,STRING,,,,,,,,,,,,,,,,\n"
 DEFAULT_TOPIC = '/vectornav'
-bagpath = Path('bag_data/imu_bag_1')
+bagpath = Path('bag_data/imu_bag_4')
+OFFSET_SECONDS = 1759599824
 
 def create_CSV(filename):
     with open(filename, 'w') as file:
         file.write(FILE_HEADER)
 
-def write_to_CSV(filename, message:PoseData):
+def write_to_CSV(filename, message:PoseData,separate_nanoseconds=False, offset_nanoseconds=OFFSET_SECONDS):
     lin=message.get_linear_velocity()
     ang=message.get_angular_velocity()
     mag=message.get_magnetic_pose()
     quat=message.get_quaternion()
     
     with open(filename,'a') as file:
+        nanosecond_value = message.get_remainder_nanoseconds() if separate_nanoseconds else (message.get_time_in_nanoseconds()-offset_nanoseconds)
         formatted_message = (
             f"{message.get_header()},"+
             f"{int(message.get_time_in_seconds())},"+
-            f"{message.get_remainder_nanoseconds()},"+
+            f"{nanosecond_value},"+
             f"{lin.x},{lin.y},{lin.z},"+
             f"{ang.x},{ang.y},{ang.z},"+
             f"{mag.x},{mag.y},{mag.z},"+
@@ -45,6 +47,7 @@ def main():
     create_CSV(my_file) # Create file for writing with headers
 
     # Create reader instance and open for reading.
+    nanosec_offset = None
     with AnyReader([bagpath], default_typestore=typestore) as reader:
         connections = [x for x in reader.connections if x.topic == DEFAULT_TOPIC]
         for connection, timestamp, rawdata in reader.messages(connections=connections):
@@ -59,7 +62,10 @@ def main():
             pose2.import_vectornav_msg(msg)
             pose.set_time(msg.header.stamp.sec+(msg.header.stamp.nanosec/1e9))
             if pose.is_ok():
-                write_to_CSV(my_file,pose)
+                if nanosec_offset == None:
+                    nanosec_offset = pose.get_time_in_nanoseconds()
+                    print(f"Time offset set to {nanosec_offset} nanoseconds\n")
+                write_to_CSV(my_file,pose,offset_nanoseconds=nanosec_offset)
                 print(f"write: {pose.get_raw_string()}\n")
             else:
                 print(f"*******INVALID STRING... SKIPPING************")

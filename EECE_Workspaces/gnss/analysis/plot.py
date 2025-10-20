@@ -1,16 +1,20 @@
 import os
+import math
 from gps_graph import GPSPlot
 from gps_plane import GraphGUI
+from tf_transformations import euler_from_quaternion
 
 
 CWD = os.getcwd()
 OUTDOOR_FILE =  'gps_data/rtk_open.csv'
 INDOOR_FILE =  'gps_data/rtk_occluded.csv'
 WALKING_FILE = 'gps_data/walking_open_street.csv'
+IMU_FILE = 'imu_data/imu_data.csv'
 
 OUTDOOR_FULL_PATH = os.path.join(CWD,OUTDOOR_FILE)
 OCCLUDED_FULL_PATH = os.path.join(CWD,INDOOR_FILE)
 WALKING_FULL_PATH = os.path.join(CWD,WALKING_FILE)
+IMU_FULL_PATH = os.path.join(CWD,IMU_FILE)
 
 
 ######################################################################
@@ -133,13 +137,126 @@ def draw_moving_altitude_vs_time_plot():
     chart.show('line')
 
 ######################################################################
+
+def draw_gyro_rotational_rate_plot():
+    data1 = GPSPlot('x axis rotational rate ',IMU_FULL_PATH,'red',x_axis_field='TIME_NANO',y_axis_field='ANG_X')
+    data2 = GPSPlot('y axis rotational rate',IMU_FULL_PATH,'green',x_axis_field='TIME_NANO',y_axis_field='ANG_Y')
+    data3 = GPSPlot('z axis rotational rate',IMU_FULL_PATH,'blue',x_axis_field='TIME_NANO',y_axis_field='ANG_Z')
+
+    data1.apply_function_to_data(lambda x: math.degrees(x),'ANG_X','ANG_X_DEGREES')
+    data2.apply_function_to_data(lambda y: math.degrees(y),'ANG_Y','ANG_Y_DEGREES')
+    data3.apply_function_to_data(lambda z: math.degrees(z),'ANG_Z','ANG_Z_DEGREES')
+
+    data1.set_y_axis_field('ANG_X_DEGREES')
+    data2.set_y_axis_field('ANG_Y_DEGREES')
+    data3.set_y_axis_field('ANG_Z_DEGREES')
+
+    data1.calibrate_graph('line')
+    data3.calibrate_graph('line')
+    data2.calibrate_graph('line')
+
+    chart = GraphGUI('Gyro rotational rate','Time (ns)', 'Rotational Rate (deg/s)')
+    chart.add_graph(data1)
+    chart.add_graph(data2)
+    chart.add_graph(data3)
+    # chart.set_y_range(.01)
+    
+    chart.show('line',zeroed=False)
+
+######################################################################
+
+def draw_imu_accel_rate_plot():
+    data1 = GPSPlot('x axis acceleration rate ',IMU_FULL_PATH,'red',x_axis_field='TIME_NANO',y_axis_field='LIN_X')
+    data2 = GPSPlot('y axis acceleration rate',IMU_FULL_PATH,'green',x_axis_field='TIME_NANO',y_axis_field='LIN_Y')
+    data3 = GPSPlot('z axis acceleration rate',IMU_FULL_PATH,'blue',x_axis_field='TIME_NANO',y_axis_field='LIN_Z')
+
+    # data1.apply_function_to_data(lambda x: math.degrees(x),'ANG_X','ANG_X_DEGREES')
+    # data2.apply_function_to_data(lambda y: math.degrees(y),'ANG_Y','ANG_Y_DEGREES')
+    # data3.apply_function_to_data(lambda z: math.degrees(z),'ANG_Z','ANG_Z_DEGREES')
+
+    # data1.set_y_axis_field('ANG_X_DEGREES')
+    # data2.set_y_axis_field('ANG_Y_DEGREES')
+    # data3.set_y_axis_field('ANG_Z_DEGREES')
+
+    # data1.set_fill_color('red')
+    # data2.set_fill_color('green')
+    # data3.set_fill_color('lightblue')
+    data1.calibrate_graph('line')
+    data2.calibrate_graph('line')
+    data3.calibrate_graph('line')
+
+    chart = GraphGUI('IMU Accelerometer rate','Time (ns)', 'Acceleration Rate (m/s²)')
+    chart.add_graph(data1)
+    chart.add_graph(data2)
+    chart.add_graph(data3)
+    # chart.set_y_range(13)
+    
+    chart.show('line',zeroed=False)
+
+######################################################################
+
+def draw_imu_rotation_angles_plot():
+    data1 = GPSPlot('x rotation',IMU_FULL_PATH,'red',x_axis_field='TIME_NANO',y_axis_field='QUAT_X')
+    data2 = GPSPlot('y rotation',IMU_FULL_PATH,'green',x_axis_field='TIME_NANO',y_axis_field='QUAT_Y')
+    data3 = GPSPlot('z rotation',IMU_FULL_PATH,'blue',x_axis_field='TIME_NANO',y_axis_field='QUAT_Z')
+
+    # Convert quaternions to euler angles, degrees parameter indicates if input is in degrees or radians:
+    # This is a long process
+    data1.convert_quat_to_euler('QUAT_X','QUAT_Y','QUAT_Z','QUAT_W',euler_from_quaternion,degrees=False,new_field_prefix='EULER_')
+    data2.convert_quat_to_euler('QUAT_X','QUAT_Y','QUAT_Z','QUAT_W',euler_from_quaternion,degrees=False,new_field_prefix='EULER_')
+    data3.convert_quat_to_euler('QUAT_X','QUAT_Y','QUAT_Z','QUAT_W',euler_from_quaternion,degrees=False,new_field_prefix='EULER_')
+
+    data1.set_y_axis_field('EULER_ROLL')
+    data2.set_y_axis_field('EULER_PITCH')  
+    data3.set_y_axis_field('EULER_YAW')
+
+    # data1.set_fill_color('red')
+    # data2.set_fill_color('green')
+    # data3.set_fill_color('lightblue')
+    data1.calibrate_graph('line')
+    data2.calibrate_graph('line')
+    data3.calibrate_graph('line')
+
+    chart = GraphGUI('Rotational postition per axis (x,y,z = roll, pitch, yaw)','Time (ns)', 'Rotation (degrees)')
+    chart.add_graph(data1)
+    chart.add_graph(data2)
+    chart.add_graph(data3)
+    # chart.set_y_range(10)
+    
+    chart.show('line',zeroed=True)
+
+######################################################################
+def draw_allan_deviation_plot():
+    data1 = GPSPlot('Allan Deviation of Gyro X axis',IMU_FULL_PATH,'red',x_axis_field='TIME_NANO',y_axis_field='ANG_X')
+    data2 = GPSPlot('Allan Deviation of Gyro Y axis',IMU_FULL_PATH,'green',x_axis_field='TIME_NANO',y_axis_field='ANG_Y')
+    data3 = GPSPlot('Allan Deviation of Gyro Z axis',IMU_FULL_PATH,'blue',x_axis_field='TIME_NANO',y_axis_field='ANG_Z')
+
+    data1.generate_allan_dev_series(time_field='TIME_NANO',data_field='ANG_X')
+    data2.generate_allan_dev_series(time_field='TIME_NANO',data_field='ANG_Y')
+    data3.generate_allan_dev_series(time_field='TIME_NANO',data_field='ANG_Z')
+    data1.calibrate_graph('allan')
+    data2.calibrate_graph('allan')
+    data3.calibrate_graph('allan')
+
+
+    chart = GraphGUI('Allan Deviation of Gyro axes','Tau (ns)', 'Allan Deviation (deg/s)')
+    chart.add_graph(data1)
+    chart.add_graph(data2)
+    chart.add_graph(data3)
+
+    chart.show(graph_type='allan',zeroed=False)
+######################################################################
 def main():
     # draw_stationary_scatterplot()
     # draw_stationary_altitude_vs_time_plot()
     # draw_euclidean_distance_plot_1()
     # draw_euclidean_distance_plot_2()
-    draw_moving_scatterplot()
+    # draw_moving_scatterplot()
     # draw_moving_altitude_vs_time_plot()
+    # draw_gyro_rotational_rate_plot()
+    # draw_imu_accel_rate_plot()
+    # draw_imu_rotation_angles_plot()
+    draw_allan_deviation_plot()
 
 ######################################################################
 

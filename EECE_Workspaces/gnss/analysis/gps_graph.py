@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+import math
+import allantools
 from scipy.optimize import least_squares
 
 
@@ -9,12 +11,13 @@ from scipy.optimize import least_squares
 class GPSPlot:
     DEFAULT_ALPHA = 0.25
 
-    def __init__(self, name:str='graph', filename:str='', color:str='blue'):
+    def __init__(self, name:str='graph', filename:str='', color:str='blue', x_axis_field:str='UTME', y_axis_field:str='UTMN'):
         self.__name = name
         self.__csv_file = filename
         self.__color = color
-        self.__x_axis_field = 'UTME'
-        self.__y_axis_field = 'UTMN'
+        self.__fill_color = 'None'
+        self.__x_axis_field = x_axis_field
+        self.__y_axis_field = y_axis_field
         self.__x_axis_zeroed = self.__x_axis_field + '_ZERO'
         self.__y_axis_zeroed = self.__y_axis_field + '_ZERO'
         self.__alpha = self.DEFAULT_ALPHA
@@ -32,6 +35,7 @@ class GPSPlot:
         self.__draw_lobf = False
         self.__lobf_color = 'black'
         self.__y_independent = False
+        self.__allan_series = None
         self.__slope_data = None
         self.import_file(self.__csv_file)
         self.calibrate_graph()
@@ -92,6 +96,43 @@ class GPSPlot:
         self.__draw_lobf = True
 
 ##############################################################################################
+    def apply_function_to_data(self, func, field:str, new_field:str):
+        self.__data[new_field] = self.__data[field].apply(func)
+
+##############################################################################################
+    def convert_quat_to_euler(self, x_field,y_field,z_field,w_field, func, degrees=False, new_field_prefix='CONVERTED_'):
+        # Compute euler angles row-wise to avoid passing pandas Series into transforms3d
+        def _row_to_euler(row):
+            qx = row[x_field]
+            qy = row[y_field]
+            qz = row[z_field]
+            qw = row[w_field]
+            roll, pitch, yaw = func((qx, qy, qz, qw))
+            if not degrees:
+                # tf_transformations returns radians by default; convert to degrees if requested
+                return pd.Series([math.degrees(roll), math.degrees(pitch), math.degrees(yaw)])
+            else:
+                return pd.Series([roll, pitch, yaw])
+
+        euler_df = self.__data.apply(_row_to_euler, axis=1)
+        self.__data[new_field_prefix + 'ROLL'] = euler_df.iloc[:, 0].values
+        self.__data[new_field_prefix + 'PITCH'] = euler_df.iloc[:, 1].values
+        self.__data[new_field_prefix + 'YAW'] = euler_df.iloc[:, 2].values
+
+##############################################################################################
+    def generate_allan_dev_series(self, time_field:str='TIME', data_field:str='GYRO'):
+        
+        frequency = 1.0 / np.mean(np.diff(self.__data[time_field]))   # sampling rate
+        data = self.__data[data_field].values                # numeric data only
+
+        # --- compute Allan deviation ---
+        taus, adev, _, _ = allantools.oadev(data, rate=frequency, data_type='freq', taus='all')
+
+        # --- make a new pandas Series ---
+        allan_series = pd.Series(data=adev, index=taus, name='Allan Deviation')
+        self.__allan_series = allan_series
+
+##############################################################################################
     def calibrate_graph(self, option='scatter'):
         self.__x_mean = self.__data[self.__x_axis_field].mean()
         self.__y_mean = self.__data[self.__y_axis_field].mean()
@@ -115,7 +156,22 @@ class GPSPlot:
         elif option.upper() == "HIST":
             self.__data[self.__x_axis_zeroed ] = self.__data[self.__x_axis_field] - self.__x_mean
             self.__data[self.__y_axis_zeroed] = self.__data[self.__y_axis_field] - self.__y_mean
-            pass
+
+        elif option.upper() == "ALLAN":
+            if self.__allan_series is None:
+                print("Allan series has not been generated. Call generate_allan_dev_series() before calibrating for Allan deviation.")
+                self.__data[self.__x_axis_zeroed ] = self.__data[self.__x_axis_field] - self.__x_min
+                self.__data[self.__y_axis_zeroed] = self.__data[self.__y_axis_field] - self.__y_min
+            else:
+                # For Allan deviation, zeroing may not be meaningful; keep original values
+                self.__data[self.__x_axis_zeroed ] = self.__data[self.__x_axis_field]
+                self.__data[self.__y_axis_zeroed] = self.__data[self.__y_axis_field]
+                self.__x_min = self.__allan_series.index.min()
+                self.__x_max = self.__allan_series.index.max()
+                self.__y_min = self.__allan_series.min()
+                self.__y_max = self.__allan_series.max()
+                self.__x_range = abs(self.__x_max - self.__x_min)
+                self.__y_range = abs(self.__y_max - self.__y_min)
         else:
             self.__data[self.__x_axis_zeroed ] = self.__data[self.__x_axis_field] - self.__x_min
             self.__data[self.__y_axis_zeroed] = self.__data[self.__y_axis_field] - self.__y_min
@@ -134,6 +190,8 @@ class GPSPlot:
         self.__y_axis_field = field
     def set_color(self, value:str):
         self.__color = value
+    def set_fill_color(self, value:str):
+        self.__fill_color = value
     def set_alpha(self, value):
         self.__alpha = value
 
@@ -145,6 +203,8 @@ class GPSPlot:
         return self.__csv_file
     def get_color(self):
         return self.__color
+    def get_fill_color(self):
+        return self.__fill_color
     def get_x_axis_field(self):
         return self.__x_axis_field
     def get_y_axis_field(self):
@@ -185,6 +245,8 @@ class GPSPlot:
         return self.__y_independent
     def get_slope_data(self):
         return self.__slope_data
+    def get_allan_series(self):
+        return self.__allan_series
     
     #Setters:
     def set_x_range(self,value):
