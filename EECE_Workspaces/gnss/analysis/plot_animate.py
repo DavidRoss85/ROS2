@@ -26,7 +26,7 @@ X_AXIS_FIELD = "TIME_NANO"
 Y_MIN = -220
 Y_MAX = 220
 INTERVAL = 25       # refresh rate in milliseconds
-WAIT_AMT = 5e9    # wait time before starting animation in nanoseconds
+WAIT_AMT = 25e9    # wait time before starting animation in nanoseconds
 
 OUTDOOR_FULL_PATH = os.path.join(CWD,OUTDOOR_FILE)
 OCCLUDED_FULL_PATH = os.path.join(CWD,INDOOR_FILE)
@@ -40,9 +40,9 @@ CSV_PATH = IMU_FULL_PATH
 # Create the figure
 fig, ax = plt.subplots()
 # (line1,) = ax.plot([], [], lw=2)
-linex, = ax.plot([], [], lw=2, label='X',color='red')
-liney, = ax.plot([], [], lw=2, label='Y',color='green')
-linez, = ax.plot([], [], lw=2, label='Z',color='blue')
+linex, = ax.plot([], [], lw=2, label='Roll',color='red')
+liney, = ax.plot([], [], lw=2, label='Pitch',color='green')
+linez, = ax.plot([], [], lw=2, label='Yaw',color='blue')
 
 ax.set_xlim(0, WINDOW)
 ax.set_ylim(-2, 2)
@@ -50,6 +50,7 @@ ax.set_xlabel("Time (ns)")
 ax.set_ylabel("Rotational position (degrees)")
 ax.set_title("Live Data from IMU - Euler Angles")
 ax.set_xticklabels([])
+ax.legend(loc='upper right')
 
 
 start_time = time.time_ns()

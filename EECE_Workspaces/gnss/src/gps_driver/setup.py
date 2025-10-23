@@ -13,7 +13,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        (os.path.join('share',package_name,'launch'),['launch/gps_launch.py','launch/standalone_driver_launch.py','launch/rtk_driver_launch.py']), #Add this for incorporating launch into build
+        (os.path.join('share',package_name,'launch'),['launch/gps_launch.py','launch/standalone_driver_launch.py','launch/rtk_driver_launch.py', 'launch/launch_and_record.py']), #Add this for incorporating launch into build
     ],
     install_requires=['setuptools', 'utm'],
     zip_safe=True,
