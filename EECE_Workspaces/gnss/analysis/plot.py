@@ -9,7 +9,7 @@ CWD = os.getcwd()
 OUTDOOR_FILE =  'gps_data/rtk_open.csv'
 INDOOR_FILE =  'gps_data/rtk_occluded.csv'
 WALKING_FILE = 'gps_data/walking_open_street.csv'
-IMU_FILE = 'imu_data/imu_5min_stationary.csv'
+IMU_FILE = 'imu_data/imu_freeform.csv'
 
 OUTDOOR_FULL_PATH = os.path.join(CWD,OUTDOOR_FILE)
 OCCLUDED_FULL_PATH = os.path.join(CWD,INDOOR_FILE)
