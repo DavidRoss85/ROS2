@@ -245,6 +245,9 @@ class VNYMRPositonData():
                 (mz*GAUSS_TO_TESLA_CONVERSION) if self.__convert_magnet else mz
             )
             # Set quaternion:
+            # def quaternion_from_euler(x,y,z):
+            #     return (0.0,0.0,0.0,0.0)
+            
             qx,qy,qz,qw = quaternion_from_euler(
                 self.__pose_angle.x,
                 self.__pose_angle.y,

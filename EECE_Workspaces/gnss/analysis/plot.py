@@ -9,7 +9,7 @@ CWD = os.getcwd()
 OUTDOOR_FILE =  'gps_data/rtk_open.csv'
 INDOOR_FILE =  'gps_data/rtk_occluded.csv'
 WALKING_FILE = 'gps_data/walking_open_street.csv'
-IMU_FILE = 'imu_data/imu_5hr_1.csv'
+IMU_FILE = 'imu_data/imu_5min_stationary.csv'
 
 OUTDOOR_FULL_PATH = os.path.join(CWD,OUTDOOR_FILE)
 OCCLUDED_FULL_PATH = os.path.join(CWD,INDOOR_FILE)
@@ -253,9 +253,9 @@ def main():
     # draw_euclidean_distance_plot_2()
     # draw_moving_scatterplot()
     # draw_moving_altitude_vs_time_plot()
-    # draw_gyro_rotational_rate_plot()
-    # draw_imu_accel_rate_plot()
-    # draw_imu_rotation_angles_plot()
+    draw_gyro_rotational_rate_plot()
+    draw_imu_accel_rate_plot()
+    draw_imu_rotation_angles_plot()
     draw_allan_deviation_plot()
 
 ######################################################################

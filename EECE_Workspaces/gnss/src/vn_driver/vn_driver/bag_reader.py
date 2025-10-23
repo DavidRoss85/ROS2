@@ -8,8 +8,8 @@ from vn_interfaces.msg import Vectornav    #Custom interface
 from decoders import VNYMRPositonData as PoseData, Vector3D
 
 FILE_HEADER = "HEADER,TIME_SECS,TIME_NANO,LIN_X,LIN_Y,LIN_Z,ANG_X,ANG_Y,ANG_Z,MAG_X,MAG_Y,MAG_Z,QUAT_X,QUAT_Y,QUAT_Z,QUAT_W,STRING,,,,,,,,,,,,,,,,\n"
-DEFAULT_TOPIC = '/vectornav'
-bagpath = Path('bag_data/imu_bag_4')
+DEFAULT_TOPIC = '/imu'
+bagpath = Path('bag_data/Stationary_imu_5min')
 OFFSET_SECONDS = 1759599824
 
 def create_CSV(filename):
@@ -53,7 +53,7 @@ def main():
         for connection, timestamp, rawdata in reader.messages(connections=connections):
             msg = reader.deserialize(rawdata, connection.msgtype)
             pose = PoseData(
-                msg.raw,
+                msg.raw_imu_data,
                 orientation_in_degrees=True,
                 angular_vel_in_degrees=False,
                 magnetic_in_gauss=True

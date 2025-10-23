@@ -15,7 +15,7 @@ FREQUENCY = 0.1 #10Hz
 POLL_RATE = 40  #IMU Poll rate in Hz
 BAUD_RATE = 115200  #Serial port baud
 TIMEOUT = 0.1   #timeout rate for serial port
-DEFAULT_PORT = "/dev/pts/7"#/dev/ttyUSB0"   #Default port to query
+DEFAULT_PORT = "/dev/ttyUSB1"   #Default port to query
 
 ORIENTATION_IN_DEGREES = True
 ANGULAR_VEL_IN_DEGREES = False
