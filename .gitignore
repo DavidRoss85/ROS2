@@ -8,6 +8,7 @@ src/examples/
 **/.vscode/
 venv/
 **/venv/
+**/.yolo_venv/
 .env
 **/.env
 **/gnss/bag_data/
