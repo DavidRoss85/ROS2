@@ -14,7 +14,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
             'port',
-            default_value='/dev/ttyUSB0',
+            default_value='/dev/ttyUSB1',
             description='Specifies the port address which to listen'
         ),
         DeclareLaunchArgument(

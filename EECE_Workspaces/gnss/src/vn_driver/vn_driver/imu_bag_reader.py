@@ -9,7 +9,7 @@ from decoders import VNYMRPositonData as PoseData, Vector3D
 
 FILE_HEADER = "HEADER,TIME_SECS,TIME_NANO,LIN_X,LIN_Y,LIN_Z,ANG_X,ANG_Y,ANG_Z,MAG_X,MAG_Y,MAG_Z,QUAT_X,QUAT_Y,QUAT_Z,QUAT_W,STRING,,,,,,,,,,,,,,,,\n"
 DEFAULT_TOPIC = '/imu'
-bagpath = Path('bag_data/Freeform_imu')
+bagpath = Path('imu_bag_10_28_2025_1662')
 OFFSET_SECONDS = 1759599824
 
 def create_CSV(filename):
