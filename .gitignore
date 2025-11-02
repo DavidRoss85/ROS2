@@ -15,3 +15,4 @@ venv/
 **/gnss/gps_data/
 **/gnss/imu_data/
 **/__pycache__/
+**/yolov8s.pt

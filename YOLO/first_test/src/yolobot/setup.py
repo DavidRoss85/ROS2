@@ -28,6 +28,7 @@ setup(
         'console_scripts': [
             'yolo_basic = yolobot.yolo_basic:main',
             'yolo_viz = yolobot.yolo_viz:main',
+            'cam_pass = yolobot.test_turtle_camera:main'
         ],
     },
 )
