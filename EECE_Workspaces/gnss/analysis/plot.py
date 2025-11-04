@@ -9,7 +9,7 @@ CWD = os.getcwd()
 OUTDOOR_FILE =  'gps_data/rtk_open.csv'
 INDOOR_FILE =  'gps_data/rtk_occluded.csv'
 WALKING_FILE = 'gps_data/walking_open_street.csv'
-IMU_FILE = 'imu_data/imu_5min_stationary.csv'
+IMU_FILE = 'imu_data/imu_circle_walk.csv'
 
 OUTDOOR_FULL_PATH = os.path.join(CWD,OUTDOOR_FILE)
 OCCLUDED_FULL_PATH = os.path.join(CWD,INDOOR_FILE)
@@ -246,6 +246,15 @@ def draw_allan_deviation_plot():
 
     chart.show(graph_type='allan',zeroed=False)
 ######################################################################
+def draw_magnet_field_plot():
+    data1 = GPSPlot('x axis magnetic field ',IMU_FULL_PATH,'red',x_axis_field='MAG_X',y_axis_field='MAG_Y')
+
+    data1.calibrate_graph('scatter')
+    chart = GraphGUI('Magnetic Field X vs Y','Magnetic Field X (µT)', 'Magnetic Field Y (µT)')
+    chart.add_graph(data1)
+    chart.show(graph_type='scatter',zeroed=True)
+
+######################################################################
 def main():
     # draw_stationary_scatterplot()
     # draw_stationary_altitude_vs_time_plot()
@@ -256,7 +265,8 @@ def main():
     # draw_gyro_rotational_rate_plot()
     # draw_imu_accel_rate_plot()
     # draw_imu_rotation_angles_plot()
-    draw_allan_deviation_plot()
+    # draw_allan_deviation_plot()
+    draw_magnet_field_plot()
 
 ######################################################################
 
