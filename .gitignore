@@ -12,7 +12,7 @@ venv/
 .env
 **/.env
 **/gnss/bag_data/
-**/gnss/gps_data/
-**/gnss/imu_data/
+**/gnss/gps_data/archive/
+**/gnss/imu_data/archive
 **/__pycache__/
 **/yolov8s.pt

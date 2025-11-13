@@ -136,6 +136,9 @@ class GPSPlot:
         now = time.time()
         print(f"Starting Allan deviation calculation at time: {now}")
 
+        #convert to seconds:
+        self.__data[time_field] = self.__data[time_field] * 1e-9
+
         frequency = 1.0 / np.mean(np.diff(self.__data[time_field]))   # sampling rate
         data = self.__data[data_field].values                # numeric data only
 
