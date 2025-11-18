@@ -3,8 +3,8 @@ import pandas as pd
 from scipy.integrate import cumulative_trapezoid as cumtrapz
 import numpy as np
 
-data = pd.read_csv('imu_data/imu_circle_walk.csv')
-data = pd.read_csv('imu_data/imu_square_walk.csv')
+data = pd.read_csv('gnss/imu_data/imu_square_calibration.csv')
+data = pd.read_csv('gnss/imu_data/imu_west_seattle_drive.csv')
 
 # Convert timestamps from nanoseconds to seconds
 time = data['TIME_NANO'] * 1e-9
@@ -247,7 +247,7 @@ def plot_position_n_vs_e():
     cal_x = acc_x - np.mean(acc_x)
     cal_y = acc_y - np.mean(acc_y)
 
-    # Integrate accelration to get velocity
+    # Integrate acceleration to get velocity
     vel_x = cumtrapz(cal_x, time, initial=0)
     vel_y = cumtrapz(cal_y, time, initial=0)
 
@@ -283,17 +283,67 @@ def plot_position_n_vs_e():
     plt.show()
 
 #---------------------------------------------------------------------
+def plot_position_n_vs_e_updated():
+    # Plot North vs East position using dead reckoning from accelerometer and gyro/mag headings
+
+    # Remove biases
+    cal_x = acc_x - np.mean(acc_x)
+    cal_y = acc_y - np.mean(acc_y)
+
+    # Integrate acceleration to get velocity
+    vel_x = cumtrapz(cal_x, time, initial=0)
+    vel_y = cumtrapz(cal_y, time, initial=0)
+
+    # Integrate velocity to get position
+    pos_x = cumtrapz(vel_x, time, initial=0)
+    pos_y = cumtrapz(vel_y, time, initial=0)
+
+    # Compute headings for mag and gyro
+    heading_mag = np.arctan2(-mag_y, mag_x)
+    heading_gyro = cumtrapz(gyro_z, time, initial=0)
+
+    # Compute N and E positions using headings and positions
+
+    #We are only interested in forward movement and heading to plot dead-reckoning
+    # Magnet
+    dx = np.diff(pos_x)
+    dx = np.concatenate(([0], dx))
+    n_step = dx * np.sin(heading_mag)
+    e_step = dx * np.cos(heading_mag)
+    N_mag = np.cumsum(n_step)
+    E_mag = np.cumsum(e_step)
+    
+    # Gyro
+    n_step = dx * np.sin(heading_gyro)
+    e_step = dx * np.cos(heading_gyro)
+    N_gyro = np.cumsum(n_step)
+    E_gyro = np.cumsum(e_step)
+
+
+    # Plot N vs E positions
+    plt.figure()
+    plt.plot(E_mag, N_mag, '.', label='Mag Heading')
+    plt.plot(E_gyro, N_gyro, '.', label='Gyro Heading')
+    plt.xlabel('East (m)')
+    plt.ylabel('North (m)')
+    plt.title('Dead Reckoning: N vs E Position')
+    plt.axis('equal')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+#---------------------------------------------------------------------
 def main():
     # Call all plotting functions
-    plot_magnetic_field_raw()
-    plot_magnetic_field_calibrated()
-    plot_rotational_rate_x()
-    plot_rotational_rate_y()
-    plot_rotational_rate_z()
-    plot_acceleration_x()
-    plot_acceleration_y()
-    plot_acceleration_z()
+    # plot_magnetic_field_raw()
+    # plot_magnetic_field_calibrated()
+    # plot_rotational_rate_x()
+    # plot_rotational_rate_y()
+    # plot_rotational_rate_z()
+    # plot_acceleration_x()
+    # plot_acceleration_y()
+    # plot_acceleration_z()
     plot_position_n_vs_e()
-
+    plot_position_n_vs_e_updated()
 if __name__ == "__main__":
     main()
