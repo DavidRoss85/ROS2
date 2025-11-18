@@ -72,7 +72,7 @@ def compute_2d_mag_values(dataset,calibration_data = None):
     values['scale_ratio'] = scale_ratio
     values['time'] = time
     # Calculate heading:
-    values['heading'] = np.arctan2(mag_y,mag_z)
+    values['heading'] = np.arctan2(-mag_y,mag_x)
     values['heading_deg'] = np.degrees(values['heading'])   # convert to degrees
     values['heading_corr'] = np.arctan2(-mag_y_corr,mag_x_corr)
     values['heading_corr_deg'] = np.degrees(values['heading_corr'])   # convert to degrees
@@ -458,14 +458,14 @@ def main():
     plot_acceleration_z(calibration_data1)
     dead_reckoning_n_vs_e(calibration_data1)
 
-    plot_2d_magnetic_field(data1)
-    plot_2d_magnetic_field(data1,calibration_data1,plot_color='orange', calibrate=True)
-    plot_rotational_rate_x(data1,calibration_data1)
-    plot_rotational_rate_y(data1,calibration_data1)
-    plot_rotational_rate_z(data1,calibration_data1)
-    plot_acceleration_x(data1,calibration_data1)
-    plot_acceleration_y(data1,calibration_data1)
-    plot_acceleration_z(data1,calibration_data1)
+    # plot_2d_magnetic_field(data1)
+    # plot_2d_magnetic_field(data1,calibration_data1,plot_color='orange', calibrate=True)
+    # plot_rotational_rate_x(data1,calibration_data1)
+    # plot_rotational_rate_y(data1,calibration_data1)
+    # plot_rotational_rate_z(data1,calibration_data1)
+    # plot_acceleration_x(data1,calibration_data1)
+    # plot_acceleration_y(data1,calibration_data1)
+    # plot_acceleration_z(data1,calibration_data1)
     dead_reckoning_n_vs_e(data1,calibration_data1)
 
 
@@ -475,7 +475,7 @@ def main():
     # plot_acceleration_x(data1)
     # plot_acceleration_y(data1)
     # plot_acceleration_z(data1)
-    # dead_reckoning_n_vs_e(data1)
+    dead_reckoning_n_vs_e(data1)
 
 if __name__ == '__main__':
     main()

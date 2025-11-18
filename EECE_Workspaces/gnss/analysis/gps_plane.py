@@ -369,7 +369,7 @@ class GraphGUI:
         else:
             self.apply_line_settings(zeroed)
         # Compute and apply axis limits consistently across graph types
-        self._compute_and_apply_limits(graph_type, zeroed)
+        # self._compute_and_apply_limits(graph_type, zeroed)
             
 
         #Set chart properties:

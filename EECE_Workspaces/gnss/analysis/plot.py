@@ -16,8 +16,8 @@ OCCLUDED_FULL_PATH = os.path.join(CWD,INDOOR_FILE)
 WALKING_FULL_PATH = os.path.join(CWD,WALKING_FILE)
 IMU_FULL_PATH = os.path.join(CWD,IMU_FILE)
 
-GPS_FILE_PATH = os.path.join(CWD,'gnss/gps_data/gps_square_calibration.csv')
 GPS_FILE_PATH = os.path.join(CWD,'gnss/gps_data/gps_west_seattle_drive.csv')
+GPS_FILE_PATH = os.path.join(CWD,'gnss/gps_data/gps_square_calibration.csv')
 
 ######################################################################
 
@@ -260,15 +260,9 @@ def draw_magnet_field_plot():
 def draw_gen_gps_scatterplot(filepath= GPS_FILE_PATH):
 
     # data1 = GPSPlot('OPEN AREA GPS DATA',OUTDOOR_FULL_PATH,'blue')
-    data = GPSPlot('OCCLUDED AREA GPS DATA', filepath,'red')
+    data = GPSPlot('Driving Path', filepath,'red')
 
-    data.set_name(
-        data.get_name()
-        + "\n-Centroid\n - UTME: "
-        + str(data.get_x_mean())
-        + "\n - UTMN: "
-        + str(data.get_y_mean())
-    )
+
 
     # data2.set_name(
     #     data2.get_name()
@@ -280,9 +274,9 @@ def draw_gen_gps_scatterplot(filepath= GPS_FILE_PATH):
     data.set_alpha(.15)
     # data2.set_alpha(.15)
 
-    chart = GraphGUI('Comparison of GPS Accuracy for Open area vs Occluded area ','Deviation from mean - Easting (m)', 'Deviation from mean - Northing (m)')
-    # chart.set_x_range(10)
-    # chart.set_y_range(10)
+    chart = GraphGUI('Driving West Seattle','Easting (m)', 'Northing (m)')
+    chart.set_x_range(500)
+    chart.set_y_range(500)
     chart.add_graph(data)
     # chart.add_graph(data2)
     chart.show()
