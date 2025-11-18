@@ -7,7 +7,7 @@ from rosbags.typesys import Stores, get_typestore
 from gps_interfaces.msg import Customgps
 
 FILE_HEADER = "HEAD_FRAME,UTC_SEC,UTC_NANO,LAT,LON,ALT,UTME,UTMN,ZONE,LETTER,HDOP,FIX_Q,STRING,STRING2,STRING3,STRING4,STRING5,STRING6,STRING7,STRING8,STRING9,STRING10,STRING11,STRING12,STRING13,STRING14,STRING15\n"
-bagpath = Path('gps_bag_11_7_2025_171055')
+bagpath = Path('gnss/bag_data/Lab5/calibration_square/gps_bag_11_7_2025_18152955')
 DEFAULT_FILENAME = "gps_data/gps_data.csv"
 DEFAULT_TOPIC = "/gps"
 
