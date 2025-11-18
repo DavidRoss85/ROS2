@@ -3,8 +3,12 @@ import pandas as pd
 from scipy.integrate import cumulative_trapezoid as cumtrapz
 import numpy as np
 
+data = pd.read_csv('gnss/imu_data/imu_lab4_circle_walk.csv')
+
 data = pd.read_csv('gnss/imu_data/imu_square_calibration.csv')
 data = pd.read_csv('gnss/imu_data/imu_west_seattle_drive.csv')
+
+data = pd.read_csv('gnss/imu_data/imu_lab4_square_walk.csv')
 
 # Convert timestamps from nanoseconds to seconds
 time = data['TIME_NANO'] * 1e-9
@@ -339,11 +343,12 @@ def main():
     # plot_magnetic_field_calibrated()
     # plot_rotational_rate_x()
     # plot_rotational_rate_y()
-    # plot_rotational_rate_z()
+    plot_rotational_rate_z()
     # plot_acceleration_x()
     # plot_acceleration_y()
     # plot_acceleration_z()
-    plot_position_n_vs_e()
+    # plot_position_n_vs_e()
     plot_position_n_vs_e_updated()
+
 if __name__ == "__main__":
     main()
