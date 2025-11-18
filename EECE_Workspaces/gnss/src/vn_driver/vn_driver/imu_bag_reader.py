@@ -8,7 +8,7 @@ from vn_interfaces.msg import Vectornav    #Custom interface
 from decoders import VNYMRPositonData as PoseData, Vector3D
 
 FILE_HEADER = "HEADER,TIME_SECS,TIME_NANO,LIN_X,LIN_Y,LIN_Z,ANG_X,ANG_Y,ANG_Z,MAG_X,MAG_Y,MAG_Z,QUAT_X,QUAT_Y,QUAT_Z,QUAT_W,STRING,,,,,,,,,,,,,,,,\n"
-bagpath = Path('bag_data/team1-gps-imu-bag_data/team2-square-1/imu_bag_10_28_2025_1662')
+bagpath = Path('gps_bag_11_7_2025_17410')
 DEFAULT_FILENAME = "imu_data/imu_data.csv"
 DEFAULT_TOPIC = '/imu'
 OFFSET_SECONDS = 1759599824
