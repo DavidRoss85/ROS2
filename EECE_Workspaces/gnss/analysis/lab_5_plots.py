@@ -1,5 +1,6 @@
 from imu_calculators import compute_gyroscope_values, compute_2d_mag_values,\
      butter_filter, compute_acceleration_values, quaternion_to_yaw
+from simple_gps_calculators import compute_2d_gps_values
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -10,10 +11,12 @@ import numpy as np
 #Global variables:
 # Driving data
 data1 = pd.read_csv('gnss/imu_data/imu_west_seattle_drive.csv')
+gps1 = pd.read_csv('gnss/gps_data/gps_west_seattle_drive.csv')
 calibration_data1 = pd.read_csv('gnss/imu_data/imu_square_calibration.csv')
 
 # Walking data
 data2 = pd.read_csv('gnss/imu_data/imu_lab4_square_walk.csv')
+gps2 = pd.read_csv('gnss/gps_data/gps_lab4_square_walk.csv')
 calibration_data2 = pd.read_csv('gnss/imu_data/imu_lab4_circle_walk.csv')
 
 
@@ -201,14 +204,14 @@ def plot_mag_and_gyro_with_complementary_filter2(dataset, calibration_dataset):
     plt.tight_layout()
     plt.show()
 
-    return fused_heading_deg # Save this! We need it for the Trajectory map later.
+    return np.radians(fused_heading_deg) # Save the fused heading for the Trajectory map
 
 #---------------------------------------------------------------------
 def plot_foward_velocity_from_accelerometer(dataset, calibration_dataset):
     
     acc_values = compute_acceleration_values(dataset, calibration_dataset)
     time = acc_values['time']
-# 2. Extract Data for Plotting
+    # 2. Extract Data for Plotting
     # Forward Velocity (Result of integration)
     velocity_x = acc_values['vel_x']
     true_velocity_x = acc_values['vel_x_true']
@@ -253,7 +256,64 @@ def plot_foward_velocity_from_accelerometer(dataset, calibration_dataset):
 
 #---------------------------------------------------------------------
 def plot_forward_velocity_from_gps(dataset):
-    pass
+    gps_vals = compute_2d_gps_values(dataset)
+
+    time = gps_vals['time']
+    gps_fwd_vel = gps_vals['vel']
+    plt.figure(figsize=(10, 6))
+    
+    plt.plot(time, gps_fwd_vel, color='green', linewidth=1.5, label='GPS Velocity')
+    
+    plt.title('Forward Velocity Estimated from GPS')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Velocity (m/s)')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+#---------------------------------------------------------------------
+def plot_estimated_trajectory_gps_and_imu(imu_dataset,imu_calibration,gps_data, fused_heading=None):
+
+    gps_vals = compute_2d_gps_values(gps_data)
+    acc_vals = compute_acceleration_values(imu_dataset,imu_calibration)
+
+    gps_to_imu_scale = 10
+    shift_n = 50
+    shift_e = 50
+    imu_time = acc_vals['time']
+    imu_true_dist = acc_vals['dist_x_true']
+    imu_true_head = fused_heading
+
+    N_gps = gps_vals['r_utmn'] * gps_to_imu_scale + shift_n
+    E_gps = gps_vals['r_utme'] * gps_to_imu_scale + shift_e
+
+    # Compute N and E positions using headings and positions
+    #We are only interested in forward movement and heading to plot dead-reckoning
+    
+    dx = np.diff(imu_true_dist)
+    dx = np.concatenate(([0], dx))
+    
+    # Fused
+    n_step = dx * np.sin(imu_true_head)
+    e_step = dx * np.cos(imu_true_head)
+    N_true = np.cumsum(n_step)
+    E_true = np.cumsum(e_step)
+
+
+    # Plot N vs E positions
+    plt.figure()
+    plt.plot(E_gps,N_gps,'.',label='GPS trajectory')
+    plt.plot(E_true, N_true, '.', label='IMU trajectory')
+    plt.xlabel('East (m)')
+    plt.ylabel('North (m)')
+    plt.title('Dead Reckoning: N vs E Position')
+    plt.axis('equal')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+
 
 #---------------------------------------------------------------------
 def main():
@@ -273,15 +333,16 @@ def main():
     # (filter the magnetometer estimate using a low pass filter and gyro estimate using a
     # high pass filter). You might find tools that wrap angle values between -pi and pi useful.
     # Plot the results of the low pass filter, high pass filter & complementary filter together.
-    # plot_mag_and_gyro_with_complementary_filter2(data2, calibration_data2)
+    fused_heading = plot_mag_and_gyro_with_complementary_filter2(data2, calibration_data2)
     
     # Fig. 4: Plot of forward velocity from accelerometer before and after any adjustments
     plot_foward_velocity_from_accelerometer(data2, calibration_data2)
 
     # Fig. 5: Plot of forward velocity from gps
-    plot_forward_velocity_from_gps(data2)
+    plot_forward_velocity_from_gps(gps2)
 
     # Fig. 6: Plot of estimated trajectory from GPS and from IMU velocity/yaw data (2 subplots)
+    plot_estimated_trajectory_gps_and_imu(data2,calibration_data2,gps2, fused_heading)
 
 
 if __name__ == '__main__':

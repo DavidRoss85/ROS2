@@ -227,9 +227,10 @@ def dead_reckoning_n_vs_e(dataset,calibration_dataset=None):
     # Compute N and E positions using headings and positions
     #We are only interested in forward movement and heading to plot dead-reckoning
     
-    # Magnet
     dx = np.diff(pos_x)
     dx = np.concatenate(([0], dx))
+    
+    # Magnet
     n_step = dx * np.sin(heading_mag)
     e_step = dx * np.cos(heading_mag)
     N_mag = np.cumsum(n_step)

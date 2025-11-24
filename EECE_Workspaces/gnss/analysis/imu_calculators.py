@@ -145,6 +145,8 @@ def compute_acceleration_values(dataset, calibration_data=None):
     dist_y = cumtrapz(vel_y, time, initial=0)
     dist_z = cumtrapz(vel_z, time, initial=0)
 
+    dist_x_true = cumtrapz(vel_x_true,time,initial=0)
+
 
 
     values = dict()
@@ -167,6 +169,7 @@ def compute_acceleration_values(dataset, calibration_data=None):
 
     values['x_true'] = acc_forward_true
     values['vel_x_true'] = vel_x_true
+    values['dist_x_true'] = dist_x_true
 
     return values
 
