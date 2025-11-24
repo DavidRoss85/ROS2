@@ -81,109 +81,175 @@ def plot_gyro_yaw_estimation_vs_time(dataset, calibration_dataset):
     plt.show()
 
 #---------------------------------------------------------------------
-# def plot_mag_and_gyro_with_complementary_filter(dataset, calibration_dataset):
-#     mag_values = compute_2d_mag_values(dataset,calibration_dataset, use_filter=False)
-#     gyro_values = compute_gyroscope_values(dataset, calibration_dataset)
-
-#     # Complementary filter parameters
-#     order = 5
-#     sampl_freq = 40
-#     lpf_cutoff = 10
-#     hpf_cutoff = .01
-#     filter_type = "lowpass"
-
-#     sos, mag_heading_filtered = butter_filter(mag_values['heading_corr_deg'], lpf_cutoff, sampl_freq, filter_type, order)
-#     sos, gyro_heading_filtered = butter_filter(gyro_values['theta_corr_z'], hpf_cutoff, sampl_freq, "highpass", order)
-
-#     # Plot all together
-#     plt.figure(figsize=(10,10))
-
-#     plt.subplot(4,1,1)
-#     plt.plot(mag_values['time'], mag_heading_filtered, color='green')
-#     plt.title('Low Pass Filtered Magnetometer Heading')
-#     plt.ylabel('Heading (°)')
-#     plt.grid(True)
-
-#     plt.subplot(4,1,2)
-#     plt.plot(gyro_values['time'], gyro_heading_filtered, color='purple')
-#     plt.title('Gyroscope Heading')
-#     plt.ylabel('Heading (°)')
-#     plt.grid(True)
-
-#     plt.subplot(4,1,3)
-#     plt.plot(gyro_values['time'], gyro_values['theta_corr_z'], color='orange')
-#     plt.title('Complementary Filter Output Heading')
-#     plt.ylabel('Heading (°)')
-#     plt.grid(True)
-
-#     # plt.subplot(4,1,4)
-#     # imu_heading = comp_heading  # Assuming IMU heading is the complementary filter output
-#     # plt.plot(gyro_values['time'], imu_heading, color='blue')
-#     # plt.title('IMU Heading Estimate')
-#     # plt.ylabel('Heading (°)')
-#     # plt.xlabel('Time (s)')
-#     # plt.grid(True)
-
-#     plt.tight_layout()
-#     plt.show()
 def plot_mag_and_gyro_with_complementary_filter(dataset, calibration_dataset):
-    # Get raw mag + gyro values (no filtering here)
+
     mag_values = compute_2d_mag_values(
-        dataset, calibration_dataset,
-        use_filter=False   # important: don't double-filter
+        dataset,
+        calibration_dataset, 
+        use_filter=True,
+        filter_order=5,
+        cutoff_freq=.3,
+        sampl_freq=40,
+        filter_type="lowpass"
     )
-    gyro_values = compute_gyroscope_values(dataset, calibration_dataset)
-
-    # Filter parameters
-    order = 5
-    sampl_freq = 50     # Hz (approx sample rate of your data)
-    cutoff_lpf = 0.1    # Hz for magnetometer low-pass
-    cutoff_hpf = 0.3    # Hz for gyro high-pass
-
-    # 1) Low-pass filter magnetometer heading (degrees)
-    mag_heading_deg = mag_values['heading_corr_deg']
-    _, mag_heading_lpf = butter_filter(
-        mag_heading_deg,
-        cutoff_lpf, sampl_freq,
-        "lowpass", order
-    )
-
-    # 2) High-pass filter gyro *integrated* heading (degrees)
-    theta_corr_z_deg = np.degrees(gyro_values['theta_corr_z'])
-    _, gyro_heading_hpf = butter_filter(
-        theta_corr_z_deg,
-        cutoff_hpf, sampl_freq,
-        "highpass", order
+    gyro_values = compute_gyroscope_values(
+        dataset, 
+        calibration_dataset,
+        use_filter=True,
+        filter_order=5,
+        cutoff_freq=.5,
+        sampl_freq=40,
+        filter_type="highpass"
     )
 
-    # Plot for debugging
-    plt.figure(figsize=(10, 8))
+    unfiltered_gyro_values = compute_gyroscope_values(
+        dataset, 
+        calibration_dataset,
+        use_filter=False,
+        filter_order=5,
+        cutoff_freq=.5,
+        sampl_freq=40,
+        filter_type="highpass"
+    )
+    # sos, mag_heading_filtered = butter_filter(mag_values['heading_corr_deg'], lpf_cutoff, sampl_freq, filter_type, order)
+    sos, gyro_heading_filtered = butter_filter(unfiltered_gyro_values['theta_z'], .5, 40, "highpass", 5)
 
-    plt.subplot(3, 1, 1)
-    plt.plot(mag_values['time'], mag_heading_deg, label="Mag heading (raw)")
-    plt.plot(mag_values['time'], mag_heading_lpf, label="Mag heading (LPF)")
-    plt.title('Magnetometer Heading (Raw vs Low-Pass Filtered)')
+    # Plot all together
+    plt.figure(figsize=(10,10))
+
+    plt.subplot(4,1,1)
+    plt.plot(mag_values['time'], mag_values['heading_corr_deg'], color='green')
+    plt.title('Low Pass Filtered Magnetometer Heading')
     plt.ylabel('Heading (°)')
     plt.grid(True)
-    plt.legend()
 
-    plt.subplot(3, 1, 2)
-    plt.plot(gyro_values['time'], theta_corr_z_deg, label="Gyro heading (integrated, corr)")
-    plt.title('Gyro Heading (Integrated, Bias-Corrected)')
+    plt.subplot(4,1,2)
+    plt.plot(gyro_values['time'], gyro_values['theta_z'], color='purple')
+    plt.title('Gyroscope Heading')
     plt.ylabel('Heading (°)')
     plt.grid(True)
-    plt.legend()
 
-    plt.subplot(3, 1, 3)
-    plt.plot(gyro_values['time'], gyro_heading_hpf, label="Gyro heading (HPF)")
-    plt.title('High-Pass Filtered Gyro Heading')
+    plt.subplot(4,1,3)
+    plt.plot(gyro_values['time'], gyro_heading_filtered, color='orange')
+    plt.title('Complementary Filter Output Heading')
     plt.ylabel('Heading (°)')
-    plt.xlabel('Time (s)')
     plt.grid(True)
-    plt.legend()
+
+    # plt.subplot(4,1,4)
+    # imu_heading = comp_heading  # Assuming IMU heading is the complementary filter output
+    # plt.plot(gyro_values['time'], imu_heading, color='blue')
+    # plt.title('IMU Heading Estimate')
+    # plt.ylabel('Heading (°)')
+    # plt.xlabel('Time (s)')
+    # plt.grid(True)
+
+#-----------------------------
+def plot_mag_and_gyro_with_complementary_filter2(dataset, calibration_dataset):
+    # 1. Get the raw data 
+    # (Note: We use the calibration dataset to calculate the bias, but apply it to the dataset)
+    mag_vals = compute_2d_mag_values(dataset, calibration_dataset, use_filter=False)
+    gyro_vals = compute_gyroscope_values(dataset, calibration_dataset)
+    
+    time = mag_vals['time']
+    # Calculate dt (time difference between samples)
+    dt = np.mean(np.diff(time)) 
+    
+    # ---------------------------------------------------------
+    # PART A: Low Pass Filter on Magnetometer (for Subplot 1)
+    # ---------------------------------------------------------
+    # We filter the UNWRAPPED radians to avoid issues at +/- 180 degrees
+    mag_heading_unwrap = np.unwrap(mag_vals['heading'])
+    
+    # Filter: Cutoff 0.5Hz (Slow/Steady), Sample Rate 1/dt
+    _, mag_lpf_rad = butter_filter(mag_heading_unwrap, 0.5, 1/dt, 'lowpass', 5)
+    
+    # Wrap back to degrees for plotting (-180 to 180)
+    mag_lpf_deg = np.degrees((mag_lpf_rad + np.pi) % (2 * np.pi) - np.pi)
+
+    # ---------------------------------------------------------
+    # PART B: High Pass Filter on Gyro (for Subplot 2)
+    # ---------------------------------------------------------
+    # This is the "Broken" plot that will show the slanted step decay
+    gyro_heading_unwrap = np.unwrap(gyro_vals['theta_z'])
+    
+    # Filter: Cutoff 0.01Hz (Very slow drift removal)
+    _, gyro_hpf_rad = butter_filter(gyro_heading_unwrap, 0.01, 1/dt, 'highpass', 5)
+    gyro_hpf_deg = np.degrees(gyro_hpf_rad)
+
+    # ---------------------------------------------------------
+    # PART C: Complementary Filter (for Subplot 3)
+    # ---------------------------------------------------------
+    alpha = 0.98
+    fused_heading = []
+    
+    # Start with the Mag heading so we don't start at 0 if we are facing West
+    current_heading = mag_vals['heading'][0] 
+    
+    gyro_rate = gyro_vals['z'] # We need the RATE (deg/s or rad/s), not the angle
+    mag_heading = mag_vals['heading']
+
+    for i in range(len(time)):
+        # 1. Integrate Gyro (The "New" Motion)
+        gyro_step = gyro_rate[i] * dt
+        
+        # 2. Get Mag reading (The "Anchor")
+        mag_step = mag_heading[i]
+        
+        # 3. Handle Wrapping! (Crucial Math Step)
+        # If filter says 10° and Mag says 350°, the difference is +20°, not -340°
+        if (mag_step - current_heading) > np.pi:
+            mag_step -= 2*np.pi
+        elif (mag_step - current_heading) < -np.pi:
+            mag_step += 2*np.pi
+            
+        # 4. The Equation: 98% Gyro Integration + 2% Mag Correction
+        current_heading = alpha * (current_heading + gyro_step) + (1 - alpha) * mag_step
+        
+        fused_heading.append(current_heading)
+    
+    # Convert to degrees for plotting
+    fused_heading_deg = np.degrees((np.array(fused_heading) + np.pi) % (2 * np.pi) - np.pi)
+
+    # ---------------------------------------------------------
+    # PLOTTING
+    # ---------------------------------------------------------
+    fig, axs = plt.subplots(4, 1, figsize=(10, 12), sharex=True)
+    
+    # Subplot 1: LPF Mag
+    axs[0].plot(time, mag_vals['heading_corr_deg'], '.', color='lightgray', label='Raw Mag')
+    axs[0].plot(time, mag_lpf_deg, color='green', linewidth=2, label='LPF Mag')
+    axs[0].set_ylabel('Heading (°)')
+    axs[0].set_title('Low Pass Filtered Magnetometer (Removes Jitter)')
+    axs[0].legend()
+    axs[0].grid(True)
+
+    # Subplot 2: HPF Gyro
+    axs[1].plot(time, gyro_vals['theta_z_deg'], '--', color='gray', alpha=0.5, label='Integrated Gyro')
+    axs[1].plot(time, gyro_hpf_deg, color='purple', label='HPF Gyro')
+    axs[1].set_ylabel('Heading (°)')
+    axs[1].set_title('High Pass Filtered Gyroscope (Shows Decay/Slant)')
+    axs[1].legend()
+    axs[1].grid(True)
+
+    # Subplot 3: Complementary Filter
+    axs[2].plot(time, fused_heading_deg, color='orange', linewidth=2)
+    axs[2].set_ylabel('Heading (°)')
+    axs[2].set_title('Complementary Filter Output (Fused)')
+    axs[2].grid(True)
+
+    # Subplot 4: Comparison
+    axs[3].plot(time, mag_vals['heading_corr_deg'], label='Mag', alpha=0.3)
+    axs[3].plot(time, fused_heading_deg, label='Complementary', color='orange')
+    axs[3].set_ylabel('Heading (°)')
+    axs[3].set_title('Comparison')
+    axs[3].set_xlabel('Time (s)')
+    axs[3].legend()
+    axs[3].grid(True)
 
     plt.tight_layout()
     plt.show()
+
+    return fused_heading_deg # Save this! We need it for the Trajectory map later.
 
 def main():
     # Fig. 0: A plot showing the magnetometer data before and after the correction in your report.
@@ -199,7 +265,8 @@ def main():
     # Use a complementary filter to combine the yaw measurements from the magnetometer and yaw rate/gyro to get an improved estimate of the yaw angle (filter the magnetometer estimate using a low pass filter and gyro estimate using a high pass filter). You might find tools that wrap angle values between 
     # -pi and pi useful.
     # Plot the results of the low pass filter, high pass filter & complementary filter together.
-    plot_mag_and_gyro_with_complementary_filter(data1, calibration_data1)
+    plot_mag_and_gyro_with_complementary_filter(data2, calibration_data2)
+    plot_mag_and_gyro_with_complementary_filter2(data2, calibration_data2)
     
     # Fig. 4: Plot of forward velocity from accelerometer before and after any adjustments
     # Fig. 5: Plot of forward velocity from gps

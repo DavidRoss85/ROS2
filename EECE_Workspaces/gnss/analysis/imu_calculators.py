@@ -155,7 +155,7 @@ def compute_acceleration_values(dataset, calibration_data=None):
     return values
 
 #---------------------------------------------------------------------
-def compute_gyroscope_values(dataset, calibration_data=None):
+def compute_gyroscope_values(dataset,calibration_data = None,use_filter = False, filter_order = 5, cutoff_freq = 3.667, sampl_freq = 200, filter_type = "highpass"):
     
     # Convert timestamps from nanoseconds to seconds
     time = dataset['TIME_NANO'] * 1e-9
@@ -165,6 +165,28 @@ def compute_gyroscope_values(dataset, calibration_data=None):
     gyro_x = dataset['ANG_X']  # Angular rate X
     gyro_y = dataset['ANG_Y']  # Angular rate Y
     gyro_z = dataset['ANG_Z']  # Angular rate Z
+
+    #Filter Values:
+    if use_filter:
+        sos, gyro_x = butter_filter(gyro_x, cutoff_freq, sampl_freq, filter_type, filter_order)
+        sos, gyro_y = butter_filter(gyro_y, cutoff_freq, sampl_freq, filter_type, filter_order)
+        sos, gyro_z = butter_filter(gyro_z, cutoff_freq, sampl_freq, filter_type, filter_order)
+
+    # Calibration Values
+    cal_x, cal_y, cal_z = None, None, None
+    if calibration_data is not None:
+        if use_filter:
+            _, cal_x = butter_filter(calibration_data['ANG_X'], cutoff_freq, sampl_freq, filter_type, filter_order)
+            _, cal_y = butter_filter(calibration_data['ANG_Y'], cutoff_freq, sampl_freq, filter_type, filter_order)
+            _, cal_z = butter_filter(calibration_data['ANG_Z'], cutoff_freq, sampl_freq, filter_type, filter_order)
+        else:
+            cal_x = calibration_data['ANG_X']   # North component
+            cal_y = calibration_data['ANG_Y']   # East component
+            cal_z = calibration_data['ANG_Z']   # Down component
+    else:
+        cal_x = gyro_x
+        cal_y = gyro_y
+        cal_z = gyro_z
 
     # Set calibration values
     if calibration_data is not None:
@@ -210,6 +232,7 @@ def compute_gyroscope_values(dataset, calibration_data=None):
     values['theta_x'] = theta_x
     values['theta_y'] = theta_y
     values['theta_z'] = theta_z
+    values['theta_z_deg'] = np.degrees(theta_z)
     values['theta_corr_x'] = theta_corr_x
     values['theta_corr_y'] = theta_corr_y
     values['theta_corr_z'] = theta_corr_z
