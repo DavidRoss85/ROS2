@@ -1,5 +1,5 @@
 from imu_calculators import compute_gyroscope_values, compute_2d_mag_values,\
-     butter_filter, compute_acceleration_values
+     butter_filter, compute_acceleration_values, quaternion_to_yaw
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -158,10 +158,10 @@ def plot_mag_and_gyro_with_complementary_filter2(dataset, calibration_dataset):
     # PART A: Low Pass Filter on Magnetometer (for Subplot 1)
     # ---------------------------------------------------------
     # We filter the UNWRAPPED radians to avoid issues at +/- 180 degrees
-    mag_heading_unwrap = np.unwrap(mag_vals['heading'])
+    mag_heading_unwrap = np.unwrap(mag_vals['heading_corr'])
     
     # Filter: Cutoff 0.5Hz (Slow/Steady), Sample Rate 1/dt
-    _, mag_lpf_rad = butter_filter(mag_heading_unwrap, 0.5, 1/dt, 'lowpass', 5)
+    _, mag_lpf_rad = butter_filter(mag_heading_unwrap, .4, 1/dt, 'lowpass', 5)
     
     # Wrap back to degrees for plotting (-180 to 180)
     mag_lpf_deg = np.degrees((mag_lpf_rad + np.pi) % (2 * np.pi) - np.pi)
@@ -179,7 +179,7 @@ def plot_mag_and_gyro_with_complementary_filter2(dataset, calibration_dataset):
     # ---------------------------------------------------------
     # PART C: Complementary Filter (for Subplot 3)
     # ---------------------------------------------------------
-    alpha = 0.98
+    alpha = 1
     fused_heading = []
     
     # Start with the Mag heading so we don't start at 0 if we are facing West
@@ -209,7 +209,9 @@ def plot_mag_and_gyro_with_complementary_filter2(dataset, calibration_dataset):
     
     # Convert to degrees for plotting
     fused_heading_deg = np.degrees((np.array(fused_heading) + np.pi) % (2 * np.pi) - np.pi)
-
+    
+    # Get yaw from IMU
+    imu_yaw = quaternion_to_yaw(dataset)
     # ---------------------------------------------------------
     # PLOTTING
     # ---------------------------------------------------------
@@ -238,8 +240,8 @@ def plot_mag_and_gyro_with_complementary_filter2(dataset, calibration_dataset):
     axs[2].grid(True)
 
     # Subplot 4: Comparison
-    axs[3].plot(time, mag_vals['heading_corr_deg'], label='Mag', alpha=0.3)
     axs[3].plot(time, fused_heading_deg, label='Complementary', color='orange')
+    axs[3].plot(time, imu_yaw['IMU_YAW'], label='IMU yaw', alpha=0.3)
     axs[3].set_ylabel('Heading (°)')
     axs[3].set_title('Comparison')
     axs[3].set_xlabel('Time (s)')
@@ -253,19 +255,19 @@ def plot_mag_and_gyro_with_complementary_filter2(dataset, calibration_dataset):
 
 def main():
     # Fig. 0: A plot showing the magnetometer data before and after the correction in your report.
-    # plot_mag_data_before_and_after_correction(calibration_data1, calibration_data1)
+    plot_mag_data_before_and_after_correction(calibration_data1, calibration_data1)
 
     # Fig. 1: The magnetometer yaw estimation before and after hard and soft iron calibration vs. time
-    # plot_mag_yaw_estimation_before_and_after_calibration_vs_time(data1, calibration_data1)
+    plot_mag_yaw_estimation_before_and_after_calibration_vs_time(data1, calibration_data1)
 
     # Fig. 2: Plot of gyro yaw estimation vs. time
-    # plot_gyro_yaw_estimation_vs_time(data1, calibration_data1)
+    plot_gyro_yaw_estimation_vs_time(data1, calibration_data1)
     
     # Fig. 3: Low pass filter of magnetometer data, high pass filter of gyro data, complementary filter output, and IMU heading estimate as 4 subplots on one plot
     # Use a complementary filter to combine the yaw measurements from the magnetometer and yaw rate/gyro to get an improved estimate of the yaw angle (filter the magnetometer estimate using a low pass filter and gyro estimate using a high pass filter). You might find tools that wrap angle values between 
     # -pi and pi useful.
     # Plot the results of the low pass filter, high pass filter & complementary filter together.
-    plot_mag_and_gyro_with_complementary_filter(data2, calibration_data2)
+    # plot_mag_and_gyro_with_complementary_filter(data2, calibration_data2)
     plot_mag_and_gyro_with_complementary_filter2(data2, calibration_data2)
     
     # Fig. 4: Plot of forward velocity from accelerometer before and after any adjustments

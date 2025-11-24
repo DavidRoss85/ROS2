@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.integrate import cumulative_trapezoid as cumtrapz
 from scipy.signal import butter, sosfilt
-
+from tf_transformations import euler_from_quaternion
 #---------------------------------------------------------------------
 #Modified from DelftStack https://www.delftstack.com/howto/python/low-pass-filter-python/
 #Original author: Vaibhhav Khetarpal
@@ -239,3 +239,26 @@ def compute_gyroscope_values(dataset,calibration_data = None,use_filter = False,
     values['time'] = time
 
     return values
+
+def quaternion_to_yaw(dataset, degrees=True):
+    """
+    Convert a quaternion into yaw angle (in radians).
+    Args:
+        q: geometry_msgs.msg.Quaternion
+    Returns:
+        yaw angle in radians
+    """
+    x,y,z,w = dataset['QUAT_X'], dataset['QUAT_Y'], dataset['QUAT_Z'], dataset['QUAT_W']
+    # Convert quaternion to yaw (rotation about Z)
+    yaw = np.arctan2(
+        2.0 * (w*z + x*y),
+        1.0 - 2.0 * (y*y + z*z)
+    )
+
+    # Convert to degrees if requested
+    if degrees:
+        yaw = np.degrees(yaw)
+
+    # Append to DataFrame
+    dataset['IMU_YAW'] = ((yaw)%360)-180
+    return dataset
