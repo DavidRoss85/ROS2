@@ -12,8 +12,8 @@ def compute_2d_gps_values(dataset):
     utmn = dataset['UTMN']
     time = dataset['UTC_SEC'] - dataset['UTC_SEC'][0] # in seconds
 
-    r_utme = utme - utme.mean()
-    r_utmn = utmn - utmn.mean()
+    r_utme = utme - utme[0]
+    r_utmn = utmn - utmn[0]
 
     dt = np.diff(time)
     dx = np.diff(utme)

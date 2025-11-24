@@ -37,7 +37,7 @@ def plot_mag_data_before_and_after_correction(dataset,calibration_dataset):
     plt.scatter(y, x, s=2, color='blue')   # E on x-axis, N on y-axis
     plt.xlabel('Magnetic Field East (µT)')
     plt.ylabel('Magnetic Field North (µT)')
-    plt.title('Magnetic Field: N vs E Components')
+    plt.title('Magnetic Field: N vs E Components Before Calibration')
     plt.axis('equal')  # keep aspect ratio 1:1
     plt.grid(True)
 
@@ -46,7 +46,7 @@ def plot_mag_data_before_and_after_correction(dataset,calibration_dataset):
     plt.scatter(y_c, x_c, s=2, color='orange')   # E on x-axis, N on y-axis
     plt.xlabel('Magnetic Field East (µT)')
     plt.ylabel('Magnetic Field North (µT)')
-    plt.title('Magnetic Field: N vs E Components')
+    plt.title('Magnetic Field: N vs E Components After Calibration')
     plt.axis('equal')  # keep aspect ratio 1:1
     plt.grid(True)
     plt.tight_layout()
@@ -63,6 +63,7 @@ def plot_mag_yaw_estimation_before_and_after_calibration_vs_time(dataset, calibr
     plt.plot(mag_values['time'], mag_unwrapped, color='red')  # Time vs heading
     plt.ylabel('Mag Heading (°)')
     plt.xlabel('Time (s)')
+    plt.title('Magnetometer Heading Before Calibration')
     plt.grid(True)
     plt.grid(True)
 
@@ -72,6 +73,7 @@ def plot_mag_yaw_estimation_before_and_after_calibration_vs_time(dataset, calibr
     plt.plot(mag_values['time'], mag_corr_unwrapped, color='green')  # Time vs heading
     plt.ylabel('Mag Heading (°)')
     plt.xlabel('Time (s)')
+    plt.title('Magnetometer Heading After Calibration')
     plt.grid(True)
     plt.tight_layout()
     plt.show()
@@ -174,7 +176,7 @@ def plot_mag_and_gyro_with_complementary_filter2(dataset, calibration_dataset):
     axs[0].plot(time, mag_deg, '.', color='lightgray', label='Raw Mag')
     axs[0].plot(time, mag_lpf_unwrap, color='green', linewidth=2, label='LPF Mag')
     axs[0].set_ylabel('Heading (°)')
-    axs[0].set_title('Low Pass Filtered Magnetometer (Removes Jitter)')
+    axs[0].set_title('Low Pass Filtered Magnetometer')
     axs[0].legend()
     axs[0].grid(True)
 
@@ -182,14 +184,14 @@ def plot_mag_and_gyro_with_complementary_filter2(dataset, calibration_dataset):
     axs[1].plot(time, gyro_vals['theta_z_deg'], '--', color='gray', alpha=0.5, label='Integrated Gyro')
     axs[1].plot(time, gyro_hpf_deg, color='purple', label='HPF Gyro')
     axs[1].set_ylabel('Heading (°)')
-    axs[1].set_title('High Pass Filtered Gyroscope (Shows Decay/Slant)')
+    axs[1].set_title('High Pass Filtered Gyroscope')
     axs[1].legend()
     axs[1].grid(True)
 
     # Subplot 3: Complementary Filter
     axs[2].plot(time, fused_heading_deg, color='orange', linewidth=2)
     axs[2].set_ylabel('Heading (°)')
-    axs[2].set_title('Complementary Filter Output (Fused)')
+    axs[2].set_title(f'Complementary Filter Output (Fused) α={alpha}')
     axs[2].grid(True)
 
     # Subplot 4: Comparison
@@ -232,7 +234,7 @@ def plot_foward_velocity_from_accelerometer(dataset, calibration_dataset):
     # PLOT 1: Forward Velocity (Fig 4 in your assignment)
     axs[0].plot(time, velocity_x, color='red', linewidth=2, label='Estimated Velocity')
     axs[0].set_ylabel('Velocity (m/s)')
-    axs[0].set_title('Estimated Forward Velocity (Integrated from Accel)')
+    axs[0].set_title('Estimated Forward Velocity (Integrated from Acceleration)')
     axs[0].grid(True)
     axs[0].legend()
 
@@ -278,15 +280,15 @@ def plot_estimated_trajectory_gps_and_imu(imu_dataset,imu_calibration,gps_data, 
     gps_vals = compute_2d_gps_values(gps_data)
     acc_vals = compute_acceleration_values(imu_dataset,imu_calibration)
 
-    gps_to_imu_scale = 10
-    shift_n = 50
-    shift_e = 50
-    imu_time = acc_vals['time']
-    imu_true_dist = acc_vals['dist_x_true']
-    imu_true_head = fused_heading
+    gps_to_imu_scale = 20.0  # Scale factor to align GPS and IMU distances
+    angle_offset_deg = -135.0  # Angle offset in degrees to align headings
+    angle_offset_rad = np.radians(angle_offset_deg)
 
-    N_gps = gps_vals['r_utmn'] * gps_to_imu_scale + shift_n
-    E_gps = gps_vals['r_utme'] * gps_to_imu_scale + shift_e
+    imu_true_dist = acc_vals['dist_x_true']
+    imu_true_head = fused_heading + angle_offset_rad
+
+    N_gps = gps_vals['r_utmn'] 
+    E_gps = gps_vals['r_utme']
 
     # Compute N and E positions using headings and positions
     #We are only interested in forward movement and heading to plot dead-reckoning
@@ -295,19 +297,19 @@ def plot_estimated_trajectory_gps_and_imu(imu_dataset,imu_calibration,gps_data, 
     dx = np.concatenate(([0], dx))
     
     # Fused
-    n_step = dx * np.sin(imu_true_head)
-    e_step = dx * np.cos(imu_true_head)
-    N_true = np.cumsum(n_step)
-    E_true = np.cumsum(e_step)
+    n_step = dx * np.cos(imu_true_head) /gps_to_imu_scale # Apply scale factor
+    e_step = dx * np.sin(imu_true_head) /gps_to_imu_scale
+    N_imu = np.cumsum(n_step) 
+    E_imu = np.cumsum(e_step)
 
 
     # Plot N vs E positions
     plt.figure()
     plt.plot(E_gps,N_gps,'.',label='GPS trajectory')
-    plt.plot(E_true, N_true, '.', label='IMU trajectory')
+    plt.plot(E_imu, N_imu, '.', label='IMU trajectory')
     plt.xlabel('East (m)')
     plt.ylabel('North (m)')
-    plt.title('Dead Reckoning: N vs E Position')
+    plt.title('Trajectory Plot: N vs E Position, GPS vs IMU')
     plt.axis('equal')
     plt.legend()
     plt.grid(True)
@@ -318,13 +320,13 @@ def plot_estimated_trajectory_gps_and_imu(imu_dataset,imu_calibration,gps_data, 
 #---------------------------------------------------------------------
 def main():
     # Fig. 0: A plot showing the magnetometer data before and after the correction in your report.
-    # plot_mag_data_before_and_after_correction(calibration_data1, calibration_data1)
+    plot_mag_data_before_and_after_correction(calibration_data1, calibration_data1)
 
     # Fig. 1: The magnetometer yaw estimation before and after hard and soft iron calibration vs. time
-    # plot_mag_yaw_estimation_before_and_after_calibration_vs_time(data1, calibration_data1)
+    plot_mag_yaw_estimation_before_and_after_calibration_vs_time(data1, calibration_data1)
 
     # Fig. 2: Plot of gyro yaw estimation vs. time
-    # plot_gyro_yaw_estimation_vs_time(data1, calibration_data1)
+    plot_gyro_yaw_estimation_vs_time(data1, calibration_data1)
     
     # Fig. 3: Low pass filter of magnetometer data, high pass filter of gyro data,
     # complementary filter output, and IMU heading estimate as 4 subplots on one plot
@@ -333,16 +335,16 @@ def main():
     # (filter the magnetometer estimate using a low pass filter and gyro estimate using a
     # high pass filter). You might find tools that wrap angle values between -pi and pi useful.
     # Plot the results of the low pass filter, high pass filter & complementary filter together.
-    fused_heading = plot_mag_and_gyro_with_complementary_filter2(data2, calibration_data2)
+    fused_heading = plot_mag_and_gyro_with_complementary_filter2(data1, calibration_data1)
     
     # Fig. 4: Plot of forward velocity from accelerometer before and after any adjustments
-    plot_foward_velocity_from_accelerometer(data2, calibration_data2)
+    plot_foward_velocity_from_accelerometer(data1, calibration_data1)
 
     # Fig. 5: Plot of forward velocity from gps
-    plot_forward_velocity_from_gps(gps2)
+    plot_forward_velocity_from_gps(gps1)
 
     # Fig. 6: Plot of estimated trajectory from GPS and from IMU velocity/yaw data (2 subplots)
-    plot_estimated_trajectory_gps_and_imu(data2,calibration_data2,gps2, fused_heading)
+    plot_estimated_trajectory_gps_and_imu(data1,calibration_data1,gps1, fused_heading)
 
 
 if __name__ == '__main__':

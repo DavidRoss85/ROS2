@@ -138,7 +138,23 @@ def compute_acceleration_values(dataset, calibration_data=None):
     vel_y = cumtrapz(acc_corr_y,time,initial=0)
     vel_z = cumtrapz(acc_corr_z,time,initial=0)
 
+    # Compensated forward velocity
     vel_x_true = cumtrapz(acc_forward_true,time,initial=0)
+    
+    # Get minimum velocities
+    min_velocity = np.min(vel_x)
+    min_true_velocity = np.min(vel_x_true)
+
+    # Ensure no negative velocities for forward motion
+    if min_velocity < 0:
+        # Shift entire velocity profile up
+        vel_x += min_velocity
+
+    if min_true_velocity < 0:
+        # Shift entire velocity profile up
+        vel_x_true += min_true_velocity
+        
+
 
     # Integrate twice to find distance over time
     dist_x = cumtrapz(vel_x, time, initial=0)
