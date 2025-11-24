@@ -251,6 +251,11 @@ def plot_foward_velocity_from_accelerometer(dataset, calibration_dataset):
     plt.tight_layout()
     plt.show()
 
+#---------------------------------------------------------------------
+def plot_forward_velocity_from_gps(dataset):
+    pass
+
+#---------------------------------------------------------------------
 def main():
     # Fig. 0: A plot showing the magnetometer data before and after the correction in your report.
     # plot_mag_data_before_and_after_correction(calibration_data1, calibration_data1)
@@ -274,6 +279,8 @@ def main():
     plot_foward_velocity_from_accelerometer(data2, calibration_data2)
 
     # Fig. 5: Plot of forward velocity from gps
+    plot_forward_velocity_from_gps(data2)
+
     # Fig. 6: Plot of estimated trajectory from GPS and from IMU velocity/yaw data (2 subplots)
 
 
