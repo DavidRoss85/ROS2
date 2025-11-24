@@ -1,8 +1,18 @@
 import numpy as np
 from scipy.integrate import cumulative_trapezoid as cumtrapz
+from scipy.signal import butter, sosfilt
 
 #---------------------------------------------------------------------
-def compute_2d_mag_values(dataset,calibration_data = None):
+#Modified from DelftStack https://www.delftstack.com/howto/python/low-pass-filter-python/
+#Original author: Vaibhhav Khetarpal
+def butter_filter(raw_data, cutoff_freq, sampl_freq, filt_type, filt_order):
+    nyq_freq = sampl_freq / 2 #set the Nyquist frequency (important to avoid aliasing)
+    sos = butter(N = filt_order, Wn = cutoff_freq / nyq_freq, btype=filt_type, analog=False, output='sos')
+    filtered_data = sosfilt(sos, raw_data)
+    return sos, filtered_data
+
+#---------------------------------------------------------------------
+def compute_2d_mag_values(dataset,calibration_data = None,use_filter = False, filter_order = 5, cutoff_freq = 3.667, sampl_freq = 200, filter_type = "lowpass"):
     """
     Computes 2d magnetometer values including offsets and corrected values
     """
@@ -15,11 +25,23 @@ def compute_2d_mag_values(dataset,calibration_data = None):
     time = dataset['TIME_NANO'] * 1e-9
     time = time - time.iloc[0]
 
+    #Filter Values:
+    if use_filter:
+        sos, mag_x = butter_filter(mag_x, cutoff_freq, sampl_freq, filter_type, filter_order)
+        sos, mag_y = butter_filter(mag_y, cutoff_freq, sampl_freq, filter_type, filter_order)
+        sos, mag_z = butter_filter(mag_z, cutoff_freq, sampl_freq, filter_type, filter_order)
+
     # Calibration Values
+    cal_x, cal_y, cal_z = None, None, None
     if calibration_data is not None:
-        cal_x = calibration_data['MAG_X']   # North component
-        cal_y = calibration_data['MAG_Y']   # East component
-        cal_z = calibration_data['MAG_Z']   # Down component
+        if use_filter:
+            _, cal_x = butter_filter(calibration_data['MAG_X'], cutoff_freq, sampl_freq, filter_type, filter_order)
+            _, cal_y = butter_filter(calibration_data['MAG_Y'], cutoff_freq, sampl_freq, filter_type, filter_order)
+            _, cal_z = butter_filter(calibration_data['MAG_Z'], cutoff_freq, sampl_freq, filter_type, filter_order)
+        else:
+            cal_x = calibration_data['MAG_X']   # North component
+            cal_y = calibration_data['MAG_Y']   # East component
+            cal_z = calibration_data['MAG_Z']   # Down component
     else:
         cal_x = mag_x
         cal_y = mag_y
@@ -82,6 +104,7 @@ def compute_acceleration_values(dataset, calibration_data=None):
     acc_z = dataset['LIN_Z']  # Linear acceleration Z
 
     # Set calibration values
+    cal_x, cal_y, cal_z = None, None, None
     if calibration_data is not None:
         cal_x = calibration_data['LIN_X']
         cal_y = calibration_data['LIN_Y']

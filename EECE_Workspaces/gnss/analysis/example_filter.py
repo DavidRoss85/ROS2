@@ -12,13 +12,13 @@ def butter_filter(raw_data, cutoff_freq, sampl_freq, filt_type, filt_order):
     return sos, filtered_data
 
 # Setting filter requirements
-order = 1 #you can increase this to make the filter "sharper"
+order = 5 #you can increase this to make the filter "sharper"
 sampl_freq = 200 #change to sampling frequency of your data collection
 cutoff_freq = 3.667 #modify this value to get an appropriate cutoff frequency. This can't be any higher than sampling freq 
 
 # Creating some made up, noisy data tp show filter properties
 T = 5.0  # value taken in seconds
-n = int(T * fs)  # indicates total samples
+n = int(T * sampl_freq)  # indicates total samples
 t = np.linspace(0, T, n, endpoint=False)
 
 data = (
@@ -28,7 +28,7 @@ data = (
 )
 
 # Filtering and plotting
-sos, y = butter_filter(data, cutoff_freq, sampl_freq, "lowpass", 5)
+sos, y = butter_filter(data, cutoff_freq, sampl_freq, "lowpass", order)
 
 plt.subplot(2, 1, 2)
 plt.plot(t, data, "b-", label="data")
