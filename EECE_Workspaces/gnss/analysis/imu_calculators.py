@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.integrate import cumulative_trapezoid as cumtrapz
 from scipy.signal import butter, sosfilt
-from tf_transformations import euler_from_quaternion
 #---------------------------------------------------------------------
 #Modified from DelftStack https://www.delftstack.com/howto/python/low-pass-filter-python/
 #Original author: Vaibhhav Khetarpal
@@ -103,6 +102,9 @@ def compute_acceleration_values(dataset, calibration_data=None):
     acc_y = dataset['LIN_Y']  # Linear acceleration Y
     acc_z = dataset['LIN_Z']  # Linear acceleration Z
 
+    # Get gyro values for correction
+    gyro_z = dataset['ANG_Z']  # Angular rate Z
+
     # Set calibration values
     cal_x, cal_y, cal_z = None, None, None
     if calibration_data is not None:
@@ -124,15 +126,26 @@ def compute_acceleration_values(dataset, calibration_data=None):
     acc_corr_y = acc_y - offset_y
     acc_corr_z = acc_z - offset_z
 
+    # Calculate centrifugal acceleration correction
+    # a_x_observed = a_engine + (omega^2 * x_c)
+    # Rearranged: a_engine = a_x_observed - (omega^2 * x_c)
+    x_c = 1 # lateral distance from center of rotation (guessing 1 meter)
+    correction_term = (gyro_z ** 2) * x_c
+    acc_forward_true = acc_corr_x - correction_term
+
     # Integrate to find velocity over time
     vel_x = cumtrapz(acc_corr_x,time,initial=0)
     vel_y = cumtrapz(acc_corr_y,time,initial=0)
     vel_z = cumtrapz(acc_corr_z,time,initial=0)
 
+    vel_x_true = cumtrapz(acc_forward_true,time,initial=0)
+
     # Integrate twice to find distance over time
     dist_x = cumtrapz(vel_x, time, initial=0)
     dist_y = cumtrapz(vel_y, time, initial=0)
     dist_z = cumtrapz(vel_z, time, initial=0)
+
+
 
     values = dict()
     values['x'] = acc_x
@@ -151,6 +164,9 @@ def compute_acceleration_values(dataset, calibration_data=None):
     values['dist_y'] = dist_y
     values['dist_z'] = dist_z
     values['time'] = time
+
+    values['x_true'] = acc_forward_true
+    values['vel_x_true'] = vel_x_true
 
     return values
 
