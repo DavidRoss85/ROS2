@@ -49,18 +49,21 @@ def plot_mag_data_before_and_after_correction(dataset,calibration_dataset):
 
 def plot_mag_yaw_estimation_before_and_after_calibration_vs_time(dataset, calibration_dataset):
     mag_values = compute_2d_mag_values(dataset,calibration_dataset)
+
     # Plot first chart: megnetometer heading before correction
+    mag_unwrapped = np.unwrap(mag_values['heading_deg'])
     plt.figure(figsize=(8,8))
     plt.subplot(2,1,1)
-    plt.plot(mag_values['time'], mag_values['heading_deg'], color='red')  # Time vs heading
+    plt.plot(mag_values['time'], mag_unwrapped, color='red')  # Time vs heading
     plt.ylabel('Mag Heading (°)')
     plt.xlabel('Time (s)')
     plt.grid(True)
     plt.grid(True)
 
     # Plot second chart: magnetometer heading after correction
+    mag_corr_unwrapped = np.unwrap(mag_values['heading_corr_deg'])
     plt.subplot(2,1,2)
-    plt.plot(mag_values['time'], mag_values['heading_corr_deg'], color='green')  # Time vs heading
+    plt.plot(mag_values['time'], mag_corr_unwrapped, color='green')  # Time vs heading
     plt.ylabel('Mag Heading (°)')
     plt.xlabel('Time (s)')
     plt.grid(True)
@@ -70,9 +73,10 @@ def plot_mag_yaw_estimation_before_and_after_calibration_vs_time(dataset, calibr
 #---------------------------------------------------------------------
 def plot_gyro_yaw_estimation_vs_time(dataset, calibration_dataset):
     gyro_values = compute_gyroscope_values(dataset, calibration_dataset)
+    gyro_values_unwrap = np.unwrap(gyro_values['theta_z_deg'])
     # Plot gyro heading vs time
     plt.figure(figsize=(8,6))
-    plt.plot(gyro_values['time'], gyro_values['theta_z'], color='purple')  # Time vs heading
+    plt.plot(gyro_values['time'], gyro_values_unwrap, color='purple')  # Time vs heading
     plt.ylabel('Gyro Heading (°)')
     plt.xlabel('Time (s)')
     plt.title('Gyroscope Heading vs Time')
